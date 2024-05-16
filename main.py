@@ -10,7 +10,6 @@ def main():
     game = GopherGame(player1, player2, board_size=6)
     
     while True:
-        game.board.display()
         if game.play_turn():
             break
 

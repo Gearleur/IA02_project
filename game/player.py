@@ -13,6 +13,7 @@ class Player:
         return None
 
     def strategy_brain(self, game):
+        game.board.display()
         while True:
             print(f"{self.color} player, enter your move (q, r, s): ", end="")
             s = input()
