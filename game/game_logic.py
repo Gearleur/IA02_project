@@ -44,7 +44,7 @@ class GopherGame:
 
     def play_turn(self):
         player = self.get_current_player()
-        q, r, s = player.strategy_brain(self)
+        q, r, s = player.strategy(self)
         if self.is_valid_move(q, r, s):
             self.board.place_stone(q, r, s, player.color)
             if self.is_first_turn:

@@ -14,3 +14,13 @@ def hex_subtract(a, b):
 def hex_neighbor(hex, direction):
     hex_directions = [Hex(1, 0, -1), Hex(1, -1, 0), Hex(0, -1, 1), Hex(-1, 0, 1), Hex(-1, 1, 0), Hex(0, 1, -1)]
     return hex_add(hex, hex_directions[direction])
+
+def axial_to_oddr(hex):
+    col = hex.q
+    row = hex.r + (hex.q - (hex.q & 1)) // 2
+    return Point(col, row)
+
+def oddr_to_axial(point):
+    q = point.x
+    r = point.y - (point.x - (point.x & 1)) // 2
+    return Hex(q, r)

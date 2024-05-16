@@ -3,11 +3,12 @@ from game.player import Player, AIPlayer
 
 def main():
     # Crée les joueurs
-    player1 = Player('R')  # Rouge
-    player2 = AIPlayer('B')  # Bleu (IA)
+    player1 = Player()
+    player2 = AIPlayer()
+    player3 = AIPlayer()
     
     # Crée le jeu avec les joueurs passés en paramètre
-    game = GopherGame(player1, player2, board_size=6)
+    game = GopherGame(player2, player3, board_size=6)
     
     while True:
         if game.play_turn():
