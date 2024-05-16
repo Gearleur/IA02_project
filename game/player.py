@@ -12,7 +12,7 @@ class Player:
                     return q, r, s
         return None
 
-    def strategy_brain(self, game):
+    def strategy(self, game):
         game.board.display()
         while True:
             print(f"{self.color} player, enter your move (q, r, s): ", end="")
@@ -40,7 +40,7 @@ class Player:
                 
                 
 class AIPlayer(Player):
-    def strategy_brain(self, game):
+    def strategy(self, game):
         # Simple AI strategy: pick the first valid move
         for q in range(-game.board.size, game.board.size + 1):
             for r in range(-game.board.size, game.board.size + 1):

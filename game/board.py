@@ -19,14 +19,13 @@ class Board_gopher:
         return True
 
     def display(self):
-        # Affichage texte du plateau
-        for q in range(-self.size, self.size + 1):
+        for r in range(-self.size, self.size + 1):
             # Calculer l'indentation pour chaque ligne
-            indent = abs(q)
+            indent = abs(r)
             print(' ' * indent, end='')
-            for r in range(-self.size, self.size + 1):
-                s = -r - q
-                if abs(r) <= self.size and abs(q) <= self.size and abs(s) <= self.size:
+            for q in range(-self.size, self.size + 1):
+                s = -q - r
+                if abs(q) <= self.size and abs(r) <= self.size and abs(s) <= self.size:
                     hex = Hex(q, r, s)
                     if hex in self.grid:
                         print(self.grid[hex], end=' ')
