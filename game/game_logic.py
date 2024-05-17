@@ -13,13 +13,13 @@ class GopherGame:
         self.current_player_index = 0  # Index du joueur actuel, 0 pour Rouge, 1 pour Bleu
         self.is_first_turn = True  # Pour suivre le premier tour
         
-    def switch_player(self):
+    def switch_player(self)->None:
         self.current_player_index = 1 - self.current_player_index
 
-    def get_current_player(self):
+    def get_current_player(self)->Player:
         return self.players[self.current_player_index]
 
-    def is_valid_move(self, q, r, s):
+    def is_valid_move(self, q, r, s)->bool:
         # Vérifier si le mouvement est à une case vide et qu'il est dans les limites du plateau
         if not self.board.is_valid_move(q, r, s):
             return False
@@ -42,7 +42,7 @@ class GopherGame:
         
         return has_enemy_connection and not has_friendly_connection
 
-    def play_turn(self):
+    def play_turn(self)->bool:
         player = self.get_current_player()
         q, r, s = player.strategy(self)
         if self.is_valid_move(q, r, s):
@@ -58,7 +58,7 @@ class GopherGame:
             print("Invalid move. Try again.")
         return False
 
-    def has_winner(self):
+    def has_winner(self)->bool:
         # La condition de victoire est si le joueur ne peut plus placer de pierre
         current_player_color = self.get_current_player().color
         for q in range(-self.board.size, self.board.size + 1):

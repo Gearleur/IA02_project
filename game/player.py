@@ -3,7 +3,7 @@ from game.hex import Hex, Point, hex_neighbor, hex_add, hex_subtract
 
 class Player:
 
-    def find_valid_move(self, game):
+    def find_valid_move(self, game)->tuple:
         for q in range(-game.board.size, game.board.size + 1):
             for r in range(-game.board.size, game.board.size + 1):
                 s = -q - r
@@ -11,7 +11,7 @@ class Player:
                     return q, r, s
         return None
 
-    def strategy(self, game):
+    def strategy(self, game)->tuple:
         game.board.display()
         while True:
             print(f"{game.get_current_player().color} player, enter your move (q, r, s): ", end="")
