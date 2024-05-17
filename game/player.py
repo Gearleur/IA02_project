@@ -40,9 +40,12 @@ class Player:
                 
 class AIPlayer(Player):
     
+    def __init__(self, depth=3):
+        self.depth = depth
+    
     def strategy(self, game):
         # Appel à l'algorithme Minimax pour déterminer le meilleur coup
-        best_move = self.minimax(game, depth=3, alpha=float('-inf'), beta=float('inf'), maximizing_player=True)
+        best_move = self.minimax(game, depth=self.depth, alpha=float('-inf'), beta=float('inf'), maximizing_player=True)
         return best_move[1]
 
     def minimax(self, game, depth, alpha, beta, maximizing_player):

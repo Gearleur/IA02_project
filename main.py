@@ -59,8 +59,8 @@ def final_result(state: State, score: Score, player: Player):
 def main():
     # Crée les joueurs
     player1 = Player()
-    player2 = AIPlayer()
-    player3 = AIPlayer()
+    player2 = AIPlayer(depth=3)
+    player3 = AIPlayer(depth=7)
     
     # Crée le jeu avec les joueurs passés en paramètre
     game = GopherGame(player2, player3, board_size=6)
