@@ -1,5 +1,4 @@
 # gopher_game/game/game_logic.py
-from .board import Board_gopher
 from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor
 from .player import Player
 import random
@@ -43,26 +42,51 @@ class GopherGame:
     def play_turn(self, q, r, s):
         if self.is_valid_move(q, r, s):
             self.place_stone(q, r, s, self.current_player)
+            self.switch_player()
             if self.is_first_turn:
                 self.is_first_turn = False  # Fin du premier tour
             if self.has_winner():
                 self.display()
                 print(f"Player {self.current_player} wins!")
                 return True
-            self.switch_player()
         else:
             print("Invalid move. Try again.")
         return False
+    
+    def get_all_valid_moves(self):
+        valid_moves = set()
+        if not self.grid:
+            # Premier tour, toutes les cases sont disponibles
+            for q in range(-self.size, self.size + 1):
+                for r in range(-self.size, self.size + 1):
+                    s = -q - r
+                    if abs(q) <= self.size and abs(r) <= self.size and abs(s) <= self.size:
+                        valid_moves.add((q, r, s))
+        else:
+            for hex_pos in self.grid:
+                for direction in range(6):
+                    neighbor = hex_neighbor(hex_pos, direction)
+                    if neighbor not in self.grid and abs(neighbor.q) <= self.size and abs(neighbor.r) <= self.size and abs(neighbor.s) <= self.size:
+                        has_enemy_connection = False
+                        has_friendly_connection = False
+                        for neighbor_dir in range(6):
+                            adjacent = hex_neighbor(neighbor, neighbor_dir)
+                            if adjacent in self.grid:
+                                if self.grid[adjacent] == self.current_player:
+                                    has_friendly_connection = True
+                                else:
+                                    has_enemy_connection = True
+                        if has_enemy_connection and not has_friendly_connection:
+                            valid_moves.add((neighbor.q, neighbor.r, neighbor.s))
+        return list(valid_moves)
 
     def has_winner(self):
-        # La condition de victoire est si le joueur ne peut plus placer de pierre
-        for q in range(-self.size, self.size + 1):
-            for r in range(-self.size, self.size + 1):
-                s = -q - r
-                if abs(q) <= self.size and abs(r) <= self.size and abs(s) <= self.size:
-                    if self.is_valid_move(q, r, s):
-                        return False
-        return True
+        # on fait get_valide_moves pour le joueur actuel
+        current_player_moves = self.get_all_valid_moves()
+        #si le joueur actuel n'a pas de mouvement valide, l'autre joueur gagne
+        if not current_player_moves:
+            self.switch_player()
+            return True
 
     def place_stone(self, q, r, s, player_id):
         hex_pos = Hex(q, r, s)
@@ -81,10 +105,13 @@ class GopherGame:
                 if abs(q) <= self.size and abs(r) <= self.size and abs(s) <= self.size:
                     hex_pos = Hex(q, r, s)
                     if hex_pos in self.grid:
-                        print(self.grid[hex_pos], end=' ')
+                        # Afficher 'R' pour le joueur 1 et 'B' pour le joueur 2
+                        print('R' if self.grid[hex_pos] == 1 else 'B', end=' ')
                     else:
                         print('.', end=' ')
             print()
+    
+    
             
 class DodoGame:
     def __init__(self, hex_size):

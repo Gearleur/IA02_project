@@ -1,5 +1,5 @@
 from game.game_logic import GopherGame, DodoGame
-from game.player import Player, AIPlayer
+from game.player import Player, AIPlayer, RandomPlayer
 from game.hex import oddr_to_axial, axial_to_oddr
 import random
 
@@ -58,52 +58,65 @@ import random
 #         print(f"Cell: {cell}, Player: {pl}")
 
 def main_gopher():
-    # Crée les joueurs
+    game = GopherGame()
     player1 = Player()
     player2 = Player()
-    # Crée le jeu avec les joueurs passés en paramètre
-    game = GopherGame_2(player1, player2, board_size=6)
+    ai_player_1 = AIPlayer(game, depth=3)
+    ai_player_2 = AIPlayer(game, depth=3)
+    random_player = RandomPlayer()
     
-    while True:
-        print(game.grid)
-        if game.play_turn():
-            break
+    while not game.has_winner():
+        game.display()
+        if game.current_player == 1:
+            q, r, s = ai_player_1.strategy(game)
+        else:
+            q, r, s = random_player.strategy(game)
         
-def main_ia():
-    # Nombre de parties à jouer
-    num_games = 200
-    
-    # Scores des joueurs
+        place_stone = game.place_stone(q, r, s, game.current_player)
+        game.switch_player()
+        
+    game.display()
+    print(f"Game over! Player {game.current_player} wins!")
+        
+def main_ia_gopher():
+    num_games = 100
     ai_wins = 0
     random_wins = 0
 
     for _ in range(num_games):
-        # Crée les joueurs
+        game = GopherGame()
+        ai_player = AIPlayer(game, depth=3)
         random_player = RandomPlayer()
-        ai_player = AIPlayer(depth=3)  # Vous pouvez ajuster la profondeur selon vos besoins
-        
-        # Décide aléatoirement qui commence
+
+        # Tirer au sort celui qui commence
         if random.choice([True, False]):
-            player1, player2 = random_player, ai_player
+            current_player = ai_player
+            next_player = random_player
+            game.current_player = 1  # AI Player starts
         else:
-            player1, player2 = ai_player, random_player
-
-        # Crée le jeu avec les joueurs passés en paramètre
-        game = GopherGame(player1, player2, board_size=6)
+            current_player = random_player
+            next_player = ai_player
+            game.current_player = 2  # Random Player starts
         
-        while True:
-            if game.play_turn():
-                # Déterminer le gagnant
-                winner = game.get_current_player().color
-                if winner == ai_player.color:
-                    ai_wins += 1
-                else:
-                    random_wins += 1
-                break
+        while not game.has_winner():
+            if isinstance(current_player, AIPlayer):
+                q, r, s = current_player.strategy(game)
+            else:
+                q, r, s = current_player.strategy(game)
+            
+            place_stone = game.place_stone(q, r, s, game.current_player)
+            game.switch_player()
 
-    # Afficher les résultats
-    print(f"AI Wins: {ai_wins}")
-    print(f"Random Wins: {random_wins}")
+            # Alterner les joueurs
+            current_player, next_player = next_player, current_player
+
+        if game.current_player == 1:
+            ai_wins += 1
+        else:
+            random_wins += 1
+
+    print(f"AIPlayer won {ai_wins} times.")
+    print(f"RandomPlayer won {random_wins} times.")
 
 
 def main_dodo():
@@ -111,4 +124,4 @@ def main_dodo():
     game.display()
 
 if __name__ == "__main__":
-    main_gopher()
+    main_ia_gopher()
