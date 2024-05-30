@@ -1,31 +1,29 @@
 # gopher_game/game/game_logic.py
-
 from .board import Board_gopher
-from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor 
+from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor
 from .player import Player
+import random
+from typing import List, Tuple
 
 class GopherGame:
-    def __init__(self, player1, player2, board_size=6):
-        self.board = Board_gopher(size=board_size)
-        self.players = [player1, player2]
-        self.players[0].color = 'R'  # Assigner Rouge au premier joueur
-        self.players[1].color = 'B'  # Assigner Bleu au second joueur
-        self.current_player_index = 0  # Index du joueur actuel, 0 pour Rouge, 1 pour Bleu
+    def __init__(self, board_size=6):
+        self.size = board_size - 1
+        self.grid = {}  # Utiliser un dictionnaire pour stocker les hexagones et leurs états
+        self.current_player = 1  # 1 pour le premier joueur, 2 pour le second joueur
         self.is_first_turn = True  # Pour suivre le premier tour
+
+    def switch_player(self):
+        self.current_player = 3 - self.current_player  # Alterne entre 1 et 2
+
+    def is_valid_move(self, q, r, s):
+        hex_pos = Hex(q, r, s)
         
-    def switch_player(self)->None:
-        self.current_player_index = 1 - self.current_player_index
-
-    def get_current_player(self)->Player:
-        return self.players[self.current_player_index]
-
-    def is_valid_move(self, q, r, s)->bool:
         # Vérifier si le mouvement est à une case vide et qu'il est dans les limites du plateau
-        if not self.board.is_valid_move(q, r, s):
+        if hex_pos in self.grid or abs(q) > self.size or abs(r) > self.size or abs(s) > self.size:
             return False
         
-        # Première tour pour Rouge
-        if self.is_first_turn and self.get_current_player().color == 'R':
+        # Première tour pour le premier joueur
+        if self.is_first_turn and self.current_player == 1:
             return True
         
         # Vérifier les connexions ennemies et amicales selon les règles du jeu
@@ -33,38 +31,118 @@ class GopherGame:
         has_friendly_connection = False
         
         for direction in range(6):
-            neighbor = hex_neighbor(Hex(q, r, s), direction)
-            if neighbor in self.board.grid:
-                if self.board.grid[neighbor] == self.get_current_player().color:
+            neighbor = hex_neighbor(hex_pos, direction)
+            if neighbor in self.grid:
+                if self.grid[neighbor] == self.current_player:
                     has_friendly_connection = True
                 else:
                     has_enemy_connection = True
         
         return has_enemy_connection and not has_friendly_connection
 
-    def play_turn(self)->bool:
-        player = self.get_current_player()
-        q, r, s = player.strategy(self)
+    def play_turn(self, q, r, s):
         if self.is_valid_move(q, r, s):
-            self.board.place_stone(q, r, s, player.color)
+            self.place_stone(q, r, s, self.current_player)
             if self.is_first_turn:
                 self.is_first_turn = False  # Fin du premier tour
-            self.switch_player()
             if self.has_winner():
-                self.board.display()
-                print(f"Player {player.color} wins!")
+                self.display()
+                print(f"Player {self.current_player} wins!")
                 return True
+            self.switch_player()
         else:
             print("Invalid move. Try again.")
         return False
 
-    def has_winner(self)->bool:
+    def has_winner(self):
         # La condition de victoire est si le joueur ne peut plus placer de pierre
-        current_player_color = self.get_current_player().color
-        for q in range(-self.board.size, self.board.size + 1):
-            for r in range(-self.board.size, self.board.size + 1):
+        for q in range(-self.size, self.size + 1):
+            for r in range(-self.size, self.size + 1):
                 s = -q - r
-                if abs(q) <= self.board.size and abs(r) <= self.board.size and abs(s) <= self.board.size:
+                if abs(q) <= self.size and abs(r) <= self.size and abs(s) <= self.size:
                     if self.is_valid_move(q, r, s):
                         return False
         return True
+
+    def place_stone(self, q, r, s, player_id):
+        hex_pos = Hex(q, r, s)
+        if hex_pos not in self.grid:
+            self.grid[hex_pos] = player_id
+            return True
+        return False
+
+    def display(self):
+        for r in range(-self.size, self.size + 1):
+            # Calculer l'indentation pour chaque ligne
+            indent = abs(r)
+            print(' ' * indent, end='')
+            for q in range(-self.size, self.size + 1):
+                s = -q - r
+                if abs(q) <= self.size and abs(r) <= self.size and abs(s) <= self.size:
+                    hex_pos = Hex(q, r, s)
+                    if hex_pos in self.grid:
+                        print(self.grid[hex_pos], end=' ')
+                    else:
+                        print('.', end=' ')
+            print()
+            
+class DodoGame:
+    def __init__(self, hex_size):
+        self.hex_size = hex_size
+        self.state = self.get_initial_state()
+        self.current_player = 1
+
+    def get_initial_state(self) -> List[Tuple[Hex, int]]:
+        state = []
+        # Setup the board based on hex_size; assuming symmetrical setup
+        for q in range(-self.hex_size + 1, self.hex_size):
+            for r in range(max(-self.hex_size + 1, -q - self.hex_size + 1), min(self.hex_size, -q + self.hex_size)):
+                if q <= 0:
+                    state.append((Hex(q, r, -q-r), 1))  # Red player
+                else:
+                    state.append((Hex(q, r, -q-r), 2))  # Blue player
+        return state
+
+    def get_valid_moves(self, state: List[Tuple[Hex, int]], player: int) -> List[Tuple[Hex, Hex]]:
+        moves = []
+        directions = [0, 1, 2] if player == 1 else [3, 4, 5]  # Forward directions based on player
+        for hex, p in state:
+            if p == player:
+                for d in directions:
+                    neighbor = hex_neighbor(hex, d)
+                    if self.is_cell_free(neighbor, state):
+                        moves.append((hex, neighbor))
+        return moves
+
+    def is_cell_free(self, hex: Hex, state: List[Tuple[Hex, int]]) -> bool:
+        return all(hex.q != x.q or hex.r != x.r for x, _ in state)
+
+    def make_move(self, move: Tuple[Hex, Hex]):
+        start, end = move
+        for i, (hex, p) in enumerate(self.state):
+            if hex == start:
+                self.state[i] = (end, p)
+                break
+        self.current_player = 3 - self.current_player  # Switch player
+
+    def check_win(self, state: List[Tuple[Hex, int]], player: int) -> bool:
+        return not self.get_valid_moves(state, player)
+    
+    def display(self):
+        # Create a dictionary for quick access to the state
+        state_dict = {(hex.q, hex.r): player for hex, player in self.state}
+        # Display the board
+        print("\n" + " " * (2 * self.hex_size - 1) + "*")
+        for r in range(-self.hex_size + 1, self.hex_size):
+            offset = abs(r)
+            row = []
+            for q in range(-self.hex_size + 1, self.hex_size):
+                if (q, r) in state_dict:
+                    if state_dict[(q, r)] == 1:
+                        row.append('R')  # Red player
+                    elif state_dict[(q, r)] == 2:
+                        row.append('B')  # Blue player
+                else:
+                    row.append(' ')
+            print(" " * offset + ' '.join(row))
+        print(" " * (2 * self.hex_size - 1) + "*\n")

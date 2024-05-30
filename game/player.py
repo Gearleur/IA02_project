@@ -1,18 +1,25 @@
 import ast
+import random
 from game.hex import Hex, Point, hex_neighbor, hex_add, hex_subtract
 
-class Player:
 
-    def find_valid_move(self, game)->tuple:
-        for q in range(-game.board.size, game.board.size + 1):
-            for r in range(-game.board.size, game.board.size + 1):
+class Player:
+    def find_valid_move(self, game) -> tuple:
+        for q in range(-game.size, game.size + 1):
+            for r in range(-game.size, game.size + 1):
                 s = -q - r
                 if game.is_valid_move(q, r, s):
                     return q, r, s
         return None
 
-    def strategy(self, game)->tuple:
-        game.board.display()
+    def strategy(self, game) -> tuple:
+        """
+        The function `strategy` displays the game board and then enters a loop to prompt the current
+        player for their move.
+        
+        :param game: The game instance that contains the board and game logic.
+        """
+        game.display()
         while True:
             print(f"{game.get_current_player().color} player, enter your move (q, r, s): ", end="")
             s = input()
@@ -36,7 +43,8 @@ class Player:
                     print("Input must be a tuple of three indices (q, r, s).")
             except (SyntaxError, ValueError):
                 print("Invalid input. Please enter a valid tuple, e.g., (0, 1, -1)")
-                
+
+
                 
 class AIPlayer(Player):
     
@@ -55,13 +63,13 @@ class AIPlayer(Player):
         if maximizing_player:
             max_eval = float('-inf')
             best_move = None
-            for q in range(-game.board.size, game.board.size + 1):
-                for r in range(-game.board.size, game.board.size + 1):
+            for q in range(-game.size, game.size + 1):
+                for r in range(-game.size, game.size + 1):
                     s = -q - r
                     if game.is_valid_move(q, r, s):
-                        game.board.place_stone(q, r, s, game.get_current_player().color)
+                        game.place_stone(q, r, s, game.get_current_player().color)
                         eval = self.minimax(game, depth-1, alpha, beta, False)[0]
-                        game.board.grid.pop(Hex(q, r, s))  # Undo move
+                        game.grid.pop(Hex(q, r, s))  # Undo move
                         if eval > max_eval:
                             max_eval = eval
                             best_move = (q, r, s)
@@ -72,13 +80,13 @@ class AIPlayer(Player):
         else:
             min_eval = float('inf')
             best_move = None
-            for q in range(-game.board.size, game.board.size + 1):
-                for r in range(-game.board.size, game.board.size + 1):
+            for q in range(-game.size, game.size + 1):
+                for r in range(-game.size, game.size + 1):
                     s = -q - r
                     if game.is_valid_move(q, r, s):
-                        game.board.place_stone(q, r, s, game.get_current_player().color)
+                        game.place_stone(q, r, s, game.get_current_player().color)
                         eval = self.minimax(game, depth-1, alpha, beta, True)[0]
-                        game.board.grid.pop(Hex(q, r, s))  # Undo move
+                        game.grid.pop(Hex(q, r, s))  # Undo move
                         if eval < min_eval:
                             min_eval = eval
                             best_move = (q, r, s)
@@ -92,15 +100,39 @@ class AIPlayer(Player):
         current_player_color = game.get_current_player().color
         opponent_color = 'B' if current_player_color == 'R' else 'R'
         current_player_moves = sum(
-            1 for q in range(-game.board.size, game.board.size + 1)
-            for r in range(-game.board.size, game.board.size + 1)
+            1 for q in range(-game.size, game.size + 1)
+            for r in range(-game.size, game.size + 1)
             for s in [-q - r]
             if game.is_valid_move(q, r, s)
         )
         opponent_moves = sum(
-            1 for q in range(-game.board.size, game.board.size + 1)
-            for r in range(-game.board.size, game.board.size + 1)
+            1 for q in range(-game.size, game.size + 1)
+            for r in range(-game.size, game.size + 1)
             for s in [-q - r]
             if game.is_valid_move(q, r, s)
         )
         return current_player_moves - opponent_moves
+
+    
+class RandomPlayer(Player):
+    
+    def strategy(self, game):
+        # Obtenir tous les mouvements valides
+        valid_moves = self.get_all_valid_moves(game)
+        
+        # Choisir un mouvement aléatoire parmi les mouvements valides
+        if valid_moves:
+            return random.choice(valid_moves)
+        return None
+
+    def get_all_valid_moves(self, game):
+        valid_moves = []
+        for q in range(-game.board.size, game.board.size + 1):
+            for r in range(-game.board.size, game.board.size + 1):
+                s = -q - r
+                if game.is_valid_move(q, r, s):
+                    valid_moves.append(Hex(q, r, s))
+        return valid_moves
+    
+    
+    

@@ -25,4 +25,3 @@ def oddr_to_axial(point):
     r = point.y - (point.x - (point.x & 1)) // 2
     return Hex(q, r)
 
-
