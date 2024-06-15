@@ -1,127 +1,73 @@
+import random
+import torch
+import numpy as np
+import math
+import torch.nn as nn
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
 from game.game_logic import GopherGame, DodoGame
 from game.player import Player, AIPlayer, RandomPlayer
 from game.hex import oddr_to_axial, axial_to_oddr
-import random
+from game.mcts_alpha import ResNet, ResBlock, NodeAlpha, MCTSAlpha
 
-# def initialize(game: str, state: State, player: Player, hex_size: int, total_time: Time) -> Environment:
-#     # Initialiser le plateau de jeu
-#     board = Board_gopher(size=hex_size)
-#     players = [AIPlayer(), AIPlayer()]
-#     players[0].color = 'R' if player == 1 else 'B'
-#     players[1].color = 'B' if player == 1 else 'R'
     
-#     # Initialiser l'état du jeu avec les pierres déjà placées
-#     for cell, pl in state:
-#         hex = oddr_to_axial(cell)
-#         color = 'R' if pl == 1 else 'B'
-#         board.place_stone(hex.q, hex.r, hex.s, color)
+def main_alpha_gopher():
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Initialisation du jeu
+    gopher = GopherGame(board_size=6)
+
+    # # Charger un modèle spécifique (par exemple, le modèle 2)
+    # model_index = 7
+    # model_path = f'models/model_{model_index}.pt'
+    # optimizer_path = f'models/optimizer_{model_index}.pt'
+
+    # # Initialisation du modèle
+    # model = ResNet(gopher, num_resBlocks=4, num_hidden=64, device=device)
+    # model.load_state_dict(torch.load(model_path, map_location=device))
+    # model.eval()
+
+    # Création de l'état initial et des mouvements pour simuler un état de jeu
+    state = gopher.get_initial_state()
+    gopher.display(state)
     
-#     game_instance = GopherGame(players[0], players[1], board_size=hex_size)
-#     environment = {
-#         'game': game_instance,
-#         'player': player,
-#         'total_time': total_time,
-#         'hex_size': hex_size
-#     }
-#     return environment
-
-# def strategy(env: Environment, state: State, player: Player, time_left: Time) -> tuple[Environment, ActionGopher]:
-#     game_instance = env['game']
     
-#     # Mettre à jour l'état du jeu avec les mouvements du joueur adverse
-#     for cell, pl in state:
-#         hex = oddr_to_axial(cell)
-#         color = 'R' if pl == 1 else 'B'
-#         if game_instance.board.is_valid_move(hex.q, hex.r, hex.s):
-#             game_instance.board.place_stone(hex.q, hex.r, hex.s, color)
+    #test state to index
+    state = gopher.get_next_state(state, (5, -5, 0), 1)
+    state = gopher.get_next_state(state, (4, -4, 0), 2)
+    state = gopher.get_next_state(state, (3, -3, 0), 1)
+    state = gopher.get_next_state(state, (2, -2, 0), 2)
+    state = gopher.get_next_state(state, (1, -2, 1), 1)
+    state = gopher.get_next_state(state, (0, -1, 1), 2)
+    state = gopher.get_next_state(state, (0, 0, 0), 1)
+    gopher.display(state)
     
-#     # Utiliser la stratégie de l'IA pour déterminer le meilleur coup
-#     current_player = game_instance.get_current_player()
-#     move = current_player.strategy(game_instance)
-#     q, r, s = move
+
+    # Encoder l'état
+    encoded_state = gopher.get_encoded_state(state)
+    print(encoded_state)
     
-#     # Placer la pierre sur le plateau
-#     game_instance.board.place_stone(q, r, s, current_player.color)
-    
-#     # Convertir les coordonnées axiales en coordonnées offset pour le retour
-#     offset_move = axial_to_oddr(Hex(q, r, s))
-    
-#     # Mettre à jour l'environnement
-#     env['game'] = game_instance
-    
-#     return env, offset_move
+    state = gopher.get_next_state(state, (-1, 1, 0), 2)
+    encoded_state = gopher.get_encoded_state(state)
+    gopher.display(state)
+    print(encoded_state)
+    # print(encoded_state)
+    # tensor_state = torch.tensor(encoded_state).unsqueeze(0).float()
+    # model = ResNet(gopher, num_resBlocks=4, num_hidden=64)
 
-# def final_result(state: State, score: Score, player: Player):
-#     print(f"Player {player} finished with score {score}.")
-#     print("Final state:")
-#     for cell, pl in state:
-#         print(f"Cell: {cell}, Player: {pl}")
+    # # Prédiction avec le modèle
+    # policy, value = model(tensor_state)
+    # value = value.item()
+    # policy = torch.softmax(policy, axis=1).squeeze(0).detach().cpu().numpy()
 
-def main_gopher():
-    game = GopherGame()
-    player1 = Player()
-    player2 = Player()
-    ai_player_1 = AIPlayer(game, depth=3)
-    ai_player_2 = AIPlayer(game, depth=3)
-    random_player = RandomPlayer()
-    
-    while not game.has_winner():
-        game.display()
-        if game.current_player == 1:
-            q, r, s = ai_player_1.strategy(game)
-        else:
-            q, r, s = random_player.strategy(game)
-        
-        place_stone = game.place_stone(q, r, s, game.current_player)
-        game.switch_player()
-        
-    game.display()
-    print(f"Game over! Player {game.current_player} wins!")
-        
-def main_ia_gopher():
-    num_games = 100
-    ai_wins = 0
-    random_wins = 0
+    # # Afficher les résultats
+    # print(f'Value: {value}')
+    # print(f'Policy: {policy}')
+    # print(f'valide moves: {gopher.get_valid_moves_encoded(state)}')
 
-    for _ in range(num_games):
-        game = GopherGame()
-        ai_player = AIPlayer(game, depth=3)
-        random_player = RandomPlayer()
-
-        # Tirer au sort celui qui commence
-        if random.choice([True, False]):
-            current_player = ai_player
-            next_player = random_player
-            game.current_player = 1  # AI Player starts
-        else:
-            current_player = random_player
-            next_player = ai_player
-            game.current_player = 2  # Random Player starts
-        
-        while not game.has_winner():
-            if isinstance(current_player, AIPlayer):
-                q, r, s = current_player.strategy(game)
-            else:
-                q, r, s = current_player.strategy(game)
-            
-            place_stone = game.place_stone(q, r, s, game.current_player)
-            game.switch_player()
-
-            # Alterner les joueurs
-            current_player, next_player = next_player, current_player
-
-        if game.current_player == 1:
-            ai_wins += 1
-        else:
-            random_wins += 1
-
-    print(f"AIPlayer won {ai_wins} times.")
-    print(f"RandomPlayer won {random_wins} times.")
-
-
-def main_dodo():
-    game = DodoGame(4)
-    game.display()
+    # plt.bar(range(gopher.action_size), policy)
+    # plt.show()
 
 if __name__ == "__main__":
-    main_ia_gopher()
+    main_alpha_gopher()
+    
