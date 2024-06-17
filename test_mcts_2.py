@@ -17,7 +17,6 @@ args = {
     'dirichlet_alpha': 0.3
 }
 
-
 model = ResNet(gopher, num_resBlocks=9, num_hidden=128, device=device)
 model.load_state_dict(torch.load("model_7_GopherGame.pt", map_location=device))
 model.eval()
@@ -25,7 +24,6 @@ model.eval()
 
 # Initialiser MCTS
 mcts = MCTSAlpha(game=gopher, args=args, model=model)
-
 
 # Obtenir l'état initial
 state = gopher.get_initial_state()
@@ -39,7 +37,6 @@ while True:
     else:
         neutral_state = gopher.change_perspective(state, player)
         mcts_probs = mcts.search(neutral_state)
-        print(mcts_probs)
         action = np.argmax(mcts_probs)
         state = gopher.get_next_state_encoded(state, action, player)
     #current player,
