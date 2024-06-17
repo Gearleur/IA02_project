@@ -52,7 +52,7 @@ class Node:
         self.expandable_moves = self.expandable_moves[self.expandable_moves != action]
         child_state = self.state.copy()
         child_state = self.game.get_next_state_encoded(child_state, action, 1)
-        child_state = self.game.change_perspective(child_state, player = 2)
+        child_state = self.game.change_perspective(child_state, player = -1)
         
         child = Node(self.game, self.args, child_state, self, action)
         self.children.append(child)

@@ -6,15 +6,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 from game import *
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Initialiser le jeu
 gopher = GopherGame(board_size=6)
 
 args = {
-    'num_searches': 3000,  # Nombre de recherches par itération
-    'C': 2  # Constante de contrôle pour l'exploration
+    'C': 2,
+    'num_searches': 600,
+    'dirichlet_epsilon': 0.,
+    'dirichlet_alpha': 0.3
 }
 
-model = ResNet(gopher, num_resBlocks=4, num_hidden=64)
+
+model = ResNet(gopher, num_resBlocks=9, num_hidden=128, device=device)
+model.load_state_dict(torch.load("model_7_GopherGame.pt", map_location=device))
 model.eval()
 
 
@@ -29,21 +34,22 @@ player = 1
 while True:
     gopher.display(state)
     if player == 1:
-        mcts_probs = mcts.search(state)
+        action= random.choice(gopher.get_valid_moves(state))
+        state = gopher.get_next_state_idx(state, action, player)
+    else:
+        neutral_state = gopher.change_perspective(state, player)
+        mcts_probs = mcts.search(neutral_state)
+        print(mcts_probs)
         action = np.argmax(mcts_probs)
         state = gopher.get_next_state_encoded(state, action, player)
-    else:
-        q, r, s = random.choice(gopher.get_valid_moves(state))
-        print(q, r, s)
-        action = (q, r, s)
-        state = gopher.get_next_state(state, action, player)
     #current player,
     
     value, is_terminal = gopher.get_value_and_terminated(state, action)
     
     if is_terminal:
         gopher.display(state)
-        print(f"Game over! Player {3-state.current_player}wins!")
+        print(state)
+        print(f"Game over! Player {-player}wins!")
         break
     
     player = gopher.get_opponent(player)

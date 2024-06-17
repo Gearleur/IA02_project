@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from game.game_logic import GopherGame, DodoGame
 from game.player import Player, AIPlayer, RandomPlayer
-from game.hex import oddr_to_axial, axial_to_oddr
+from game.hex import oddr_to_axial, axial_to_oddr, idx_to_hex, hex_to_idx, Hex
 from game.mcts_alpha import ResNet, ResBlock, NodeAlpha, MCTSAlpha
 
     
@@ -16,45 +16,43 @@ def main_alpha_gopher():
 
     # Initialisation du jeu
     gopher = GopherGame(board_size=6)
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    # Création de l'état initial et des mouvements pour simuler un état de jeu
+    state = gopher.get_initial_state()
+    #test state to index
+    state = gopher.get_next_state(state, (0, 5, -5), 1)
+    state = gopher.get_next_state(state, (0, 4, -4), -1)
+    state = gopher.get_next_state(state, (0, 3, -3), 1)
+    moves = gopher.get_valid_moves(state, -1)
+    tableau = np.zeros((11, 11))
+    print(state)
+    for move in moves:
+        x, y = move
+        tableau[x][y] = 1
+    print(tableau)
+    
+    gopher.display(state)
+    
+    
+    
+    
+    # encoded_state = gopher.get_encoded_states(state)
+    # print(encoded_state)
+    
+    # tensor_state = torch.tensor(encoded_state, device=device).unsqueeze(0)
 
     # # Charger un modèle spécifique (par exemple, le modèle 2)
-    # model_index = 7
+    # model_index = 2
     # model_path = f'models/model_{model_index}.pt'
     # optimizer_path = f'models/optimizer_{model_index}.pt'
 
     # # Initialisation du modèle
-    # model = ResNet(gopher, num_resBlocks=4, num_hidden=64, device=device)
+    # model = ResNet(gopher, num_resBlocks=9, num_hidden=128, device=device)
     # model.load_state_dict(torch.load(model_path, map_location=device))
     # model.eval()
-
-    # Création de l'état initial et des mouvements pour simuler un état de jeu
-    state = gopher.get_initial_state()
-    gopher.display(state)
     
-    
-    #test state to index
-    state = gopher.get_next_state(state, (5, -5, 0), 1)
-    state = gopher.get_next_state(state, (4, -4, 0), 2)
-    state = gopher.get_next_state(state, (3, -3, 0), 1)
-    state = gopher.get_next_state(state, (2, -2, 0), 2)
-    state = gopher.get_next_state(state, (1, -2, 1), 1)
-    state = gopher.get_next_state(state, (0, -1, 1), 2)
-    state = gopher.get_next_state(state, (0, 0, 0), 1)
-    gopher.display(state)
-    
-
-    # Encoder l'état
-    encoded_state = gopher.get_encoded_state(state)
-    print(encoded_state)
-    
-    state = gopher.get_next_state(state, (-1, 1, 0), 2)
-    encoded_state = gopher.get_encoded_state(state)
-    gopher.display(state)
-    print(encoded_state)
-    # print(encoded_state)
-    # tensor_state = torch.tensor(encoded_state).unsqueeze(0).float()
-    # model = ResNet(gopher, num_resBlocks=4, num_hidden=64)
-
     # # Prédiction avec le modèle
     # policy, value = model(tensor_state)
     # value = value.item()

@@ -60,6 +60,9 @@ class TicTacToe:
             (state == -1, state == 0, state == 1)
         ).astype(np.float32)
         
+        if len(state.shape) == 3:
+            encoded_state = np.swapaxes(encoded_state, 0, 1)
+        
         return encoded_state
     
     
@@ -313,12 +316,15 @@ args = {
 
 tictactoe = TicTacToe()
 
-state = tictactoe.get_initial_state()
-state = tictactoe.get_next_state(state, 2, 1)
-state = tictactoe.get_next_state(state, 7, -1)
+state1 = tictactoe.get_initial_state()
+state2 = tictactoe.get_next_state(state1, 2, 1)
+state3 = tictactoe.get_next_state(state2, 7, -1)
+state3 = tictactoe.get_next_state(state3, 3, 1)
+# state est np array des états du jeu
 
-neutral_state = tictactoe.change_perspective(state, player=-1)
-neutral_state2 = tictactoe.change_perspective(neutral_state, player=-1)
+
+neutral_state = tictactoe.change_perspective(state3, player=-1)
+print(state3)
 print(neutral_state)
-print(neutral_state2)
+print(tictactoe.get_valid_moves(state3))
 

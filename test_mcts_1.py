@@ -7,19 +7,23 @@ import torch.nn.functional as F
 from game.game_logic import GopherGame, DodoGame
 from game.player import Player, AIPlayer, RandomPlayer
 from game.hex import oddr_to_axial, axial_to_oddr
-from game.mcts import Node, MCTS
+from game.mcts_alpha import NodeAlpha, MCTSAlpha, MockResNet
 
 # Définir les arguments pour MCTS
 args = {
-    'num_searches': 1000,  # Nombre de recherches par itération
-    'C': 1.4  # Constante de contrôle pour l'exploration
+    'C': 2,
+    'num_searches': 600,
+    'dirichlet_epsilon': 0.,
+    'dirichlet_alpha': 0.3
 }
-
 # Initialiser le jeu
 gopher = GopherGame(board_size=6)
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#model random pour essayer
+mock_resnet = MockResNet(gopher, num_resBlocks=5, num_hidden=128, device=device)
 # Initialiser MCTS
-mcts = MCTS(game=gopher, args=args)
+mcts = MCTSAlpha(game=gopher, args=args, model=mock_resnet)
 
 # Obtenir l'état initial
 state = gopher.get_initial_state()
@@ -28,22 +32,19 @@ player = 1
 while True:
     gopher.display(state)
     if player == 1:
-        q, r, s = random.choice(gopher.get_valid_moves(state))
-        print(q, r, s)
-        action = (q, r, s)
-        state = gopher.get_next_state(state, action, player)
-    else:
-        neutral_state = gopher.change_perspective(state, player)
-        mcts_probs = mcts.search(neutral_state)
+        mcts_probs = mcts.search(state)
         action = np.argmax(mcts_probs)
         state = gopher.get_next_state_encoded(state, action, player)
+    else:
+        action= random.choice(gopher.get_valid_moves(state))
+        state = gopher.get_next_state_idx(state, action, player)
     #current player,
     
     value, is_terminal = gopher.get_value_and_terminated(state, action)
     
     if is_terminal:
         gopher.display(state)
-        print(f"Game over! Player {3-state.current_player}wins!")
+        print(f"Game over! Player {-player}wins!")
         break
     
-    player = gopher.get_opponent(player)
+    player = -player

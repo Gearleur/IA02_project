@@ -1,5 +1,5 @@
 # gopher_game/game/game_logic.py
-from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor
+from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor, idx_to_hex, hex_to_idx
 from .player import Player
 import random
 import numpy as np
@@ -15,158 +15,155 @@ class GopherGame:
         return "GopherGame"
         
     def get_initial_state(self):
-        return {}
+        return np.zeros((2 * self.size + 1, 2 * self.size + 1), dtype=np.int8)
     
     def get_current_player(self, state):
-        # Compter le nombre de pions de chaque joueur
-        count_player_1 = sum(1 for player in state.values() if player == 1)
-        count_player_2 = sum(1 for player in state.values() if player == 2)
+        return 1 if np.sum(state) % 2 == 0 else -1
         
-        # Si c'est au tour du joueur 1 de jouer
-        if count_player_1 <= count_player_2:
-            return 1
-        else:
-            return 2
-    
     def get_next_state(self, state, action, player):
         q, r, s = action
-        if self.is_valid_move(state, q, r, s):
-            state[Hex(q, r, s)] = player
+        row = r + self.size
+        col = q + self.size
+        state[row, col] = player
+        return state
+    
+    def get_next_state_idx(self, state, action, player):
+        row, col = action
+        state[row, col] = player
         return state
     
     def get_next_state_encoded(self, state, action, player):
         rows, cols = 2 * self.size + 1, 2 * self.size + 1
         row, col = np.unravel_index(action, (rows, cols))
-        r = row - (self.size)
-        q = col - (self.size)
-        s = -q - r
-        return self.get_next_state(state, (q, r, s), player)
+        state[row, col] = player
+        return state
     
-    def get_valid_moves(self, state):
+    def is_valid_move(self, state, action, player=None):
+        if player is None:
+            player = self.get_current_player(state)
+        
+        # Vérifiez si le mouvement est à l'intérieur des limites de l'hexagone
+        if abs(action.q) > self.size or abs(action.r) > self.size or abs(action.s) > self.size:
+            return False
+        
+        # Vérifiez si la cellule est déjà occupée
+        x, y = hex_to_idx(action, self.size)
+        if state[x][y] != 0:  # Assumant que 0 signifie une cellule non occupée
+            return False
+        
+        has_enemy_connection = False
+        has_friendly_connection = False
+        
+        for direction in range(6):
+            neighbor = hex_neighbor(action, direction)
+            if abs(neighbor.q) <= self.size and abs(neighbor.r) <= self.size and abs(neighbor.s) <= self.size:
+                nx, ny = hex_to_idx(neighbor, self.size)
+                if state[nx][ny] == player:
+                    has_friendly_connection = True
+                elif state[nx][ny] != 0:
+                    has_enemy_connection = True
+        
+        return not has_friendly_connection and has_enemy_connection
+        
+    
+    def get_valid_moves(self, state, player=None):
         valid_moves = set()
-        if not state:
-            for q in range(-self.size, self.size + 1):
-                for r in range(-self.size, self.size + 1):
-                    s = -q - r
-                    if abs(q) <= self.size and abs(r) <= self.size and abs(s) <= self.size:
-                        valid_moves.add((q, r, s))
+        size = self.size
+        is_empty = not any(state.flatten())  # Check if the state matrix is empty
+        if player is None:
+            current_player = self.get_current_player(state)
         else:
-            for hex_pos in state:
-                for direction in range(6):
-                    neighbor = hex_neighbor(hex_pos, direction)
-                    if neighbor not in state and abs(neighbor.q) <= self.size and abs(neighbor.r) <= self.size and abs(neighbor.s) <= self.size:
-                        has_enemy_connection = False
-                        has_friendly_connection = False
-                        for neighbor_dir in range(6):
-                            adjacent = hex_neighbor(neighbor, neighbor_dir)
-                            if adjacent in state:
-                                if state[adjacent] == self.get_current_player(state):
-                                    has_friendly_connection = True
-                                else:
-                                    has_enemy_connection = True
-                        if has_enemy_connection and not has_friendly_connection:
-                            valid_moves.add((neighbor.q, neighbor.r, neighbor.s))
+            current_player = player
+        
+        if is_empty:
+            for q in range(-size, size+1):
+                for r in range(-size, size+1):
+                    s = -q - r
+                    x, y = hex_to_idx(Hex(q, r, s), size)
+                    if abs(q) <= size and abs(r) <= size and abs(s) <= size:
+                        valid_moves.add((x, y))
+        else:
+            for q in range(-size, size+1):
+                for r in range(-size, size+1):
+                    s = -q-r
+                    action = Hex(q, r, s)
+                    x, y = hex_to_idx(action, size)
+                    if self.is_valid_move(state, action, current_player):
+                        x, y = hex_to_idx(action, size)
+                        valid_moves.add((x, y))
         return list(valid_moves)
     
-    def get_valid_moves_encoded(self, state):
+    def get_valid_moves_encoded(self, state, player=None):
         board_size = self.size
-        valid_moves_encoded = np.zeros((2 * board_size + 1,2 * board_size + 1), dtype=np.float32)
-        valid_moves = self.get_valid_moves(state)
-        for (q, r, s) in valid_moves:
-            if abs(q) > board_size or abs(r) > board_size or abs(s) > board_size:
-                continue
-            q_idx = q + board_size
-            r_idx = r + board_size
-            if 0 <= q_idx < 2 * board_size + 1 and 0 <= r_idx < 2 * board_size + 1:
-                valid_moves_encoded[r_idx, q_idx] = 1
-                
+        valid_moves_encoded = np.zeros((2 * board_size + 1, 2 * board_size + 1), dtype=np.float32)
+        valid_moves = self.get_valid_moves(state, player)
+        
+        for (x, y) in valid_moves:
+            valid_moves_encoded[x, y] = 1
+        
         return valid_moves_encoded.flatten()
     
-    def check_win(self, state, action):
-        return len(self.get_valid_moves(state)) == 0
+    def check_win(self, state, action, player):
+        return len(self.get_valid_moves(state, player=player)) == 0
     
-    def get_value_and_terminated(self, state, action):
-        if self.check_win(state, action):
-            return 1, True
+    def get_value_and_terminated(self, state, action, player = None):
+        if player is None:
+            player = self.get_current_player(state)
+            
+        if self.check_win(state, action, player):
+            return player, True
         return 0, False
     
     def get_opponent(self, player):
-        return 3 - player
+        return -player
     
     def get_opponent_value(self, value):
         return -value
     
     def change_perspective(self, state, player):
-        new_state = state.copy()
-        if player == 2:
-            new_state = {pos: (3 - p) for pos, p in state.items()}
-        return new_state
+        return player * state
+    
     
     def get_encoded_state(self, state):
         board_size = self.size
-        encoded_state = np.zeros((3, 2 * board_size + 1, 2 * board_size + 1), dtype=np.float32)
+        current_player = self.get_current_player(state)
+        opponent = -current_player
 
-        opponent = 3 - self.get_current_player(state)
-        for (q, r, s), player in state.items():
-            if abs(q) > board_size or abs(r) > board_size or abs(s) > board_size:
-                continue
-            q_idx = q + board_size
-            r_idx = r + board_size
-            if 0 <= q_idx < 2 * board_size + 1 and 0 <= r_idx < 2 * board_size + 1:
-                if player == opponent:
-                    encoded_state[0, r_idx, q_idx] = 1
-                elif player == self.get_current_player(state):
-                    encoded_state[2, r_idx, q_idx] = 1
+        # Crée les couches pour l'état encodé
+        layer_player = (state == current_player).astype(np.float32)
+        layer_opponent = (state == opponent).astype(np.float32)
+        layer_valid_moves = np.zeros((2 * board_size + 1, 2 * board_size + 1), dtype=np.float32)
 
         valid_moves = self.get_valid_moves(state)
-        for (q, r, s) in valid_moves:
-            if abs(q) > board_size or abs(r) > board_size or abs(s) > board_size:
-                continue
-            q_idx = q + board_size
-            r_idx = r + board_size
-            if 0 <= q_idx < 2 * board_size + 1 and 0 <= r_idx < 2 * board_size + 1:
-                encoded_state[1, r_idx, q_idx] = 1
+        for (x, y) in valid_moves:
+            layer_valid_moves[x, y] = 1
+
+        # Empile les couches
+        encoded_state = np.stack((layer_opponent, layer_valid_moves, layer_player), axis=0)
 
         return encoded_state
     
-    def clone(self):
-        new_game = GopherGame(self.size + 1)
-        new_game.grid = self.grid.copy()
-        new_game.current_player = self.current_player
-        new_game.is_first_turn = self.is_first_turn
-        return new_game
-    
-    def is_valid_move(self, state, q, r, s):
-        hex_pos = Hex(q, r, s)
-        if hex_pos in state or abs(q) > self.size or abs(r) > self.size or abs(s) > self.size:
-            return False
-        if state == {}:
-            return True
-        has_enemy_connection = False
-        has_friendly_connection = False
-        for direction in range(6):
-            neighbor = hex_neighbor(hex_pos, direction)
-            if neighbor in state:
-                if state[neighbor] == self.get_current_player(state):
-                    has_friendly_connection = True
-                else:
-                    has_enemy_connection = True
-        return has_enemy_connection and not has_friendly_connection
+    def get_encoded_states(self, states):
+        encoded_states = [self.get_encoded_state(state) for state in states]
+        return np.array(encoded_states)
 
     def display(self, state):
-        for r in range(-self.size, self.size + 1):
+        board_size = self.size
+        for r in range(-board_size, board_size + 1):
             indent = abs(r)
             print(' ' * indent, end='')
-            for q in range(-self.size, self.size + 1):
+            for q in range(-board_size, board_size + 1):
                 s = -q - r
-                if abs(q) <= self.size and abs(r) <= self.size and abs(s) <= self.size:
-                    hex_pos = Hex(q, r, s)
-                    if hex_pos in state:
-                        print('R' if state[hex_pos] == 1 else 'B', end=' ')
+                if abs(q) <= board_size and abs(r) <= board_size and abs(s) <= board_size:
+                    x, y = hex_to_idx(Hex(q, r, s), board_size)
+                    if state[x][y] == 1:  # Remarquez que x et y sont inversés pour accéder correctement à state
+                        print('R', end=' ')
+                    elif state[x][y] == -1:
+                        print('B', end=' ')
                     else:
                         print('.', end=' ')
             print()
-            
+                    
     
     
     

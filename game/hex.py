@@ -25,3 +25,9 @@ def oddr_to_axial(point):
     r = point.y - (point.x - (point.x & 1)) // 2
     return Hex(q, r)
 
+def idx_to_hex(x, y, board_size):
+    return Hex(y - board_size, x - board_size, -(x - board_size) - (y - board_size))
+
+def hex_to_idx(hex, board_size):
+    return hex.r + board_size,hex.q + board_size
+
