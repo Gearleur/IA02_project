@@ -12,25 +12,25 @@ def main_alpha_gopher():
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Initialisation du jeu
-    gopher = GopherGame(board_size=6)
+    # gopher = GopherGame(board_size=6)
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    # Création de l'état initial et des mouvements pour simuler un état de jeu
-    state = gopher.get_initial_state()
-    #test state to index
-    state = gopher.get_next_state(state, (0, 5, -5), 1)
-    state = gopher.get_next_state(state, (0, 4, -4), -1)
-    state = gopher.get_next_state(state, (0, 3, -3), 1)
-    moves = gopher.get_valid_moves(state, -1)
-    tableau = np.zeros((11, 11))
-    print(state)
-    for move in moves:
-        x, y = move
-        tableau[x][y] = 1
-    print(tableau)
+    # # Création de l'état initial et des mouvements pour simuler un état de jeu
+    # state = gopher.get_initial_state()
+    # #test state to index
+    # state = gopher.get_next_state(state, (0, 5, -5), 1)
+    # state = gopher.get_next_state(state, (0, 4, -4), -1)
+    # state = gopher.get_next_state(state, (0, 3, -3), 1)
+    # moves = gopher.get_valid_moves(state, -1)
+    # tableau = np.zeros((11, 11))
+    # print(state)
+    # for move in moves:
+    #     x, y = move
+    #     tableau[x][y] = 1
+    # print(tableau)
     
-    gopher.display(state)
+    # gopher.display(state)
     
     
     

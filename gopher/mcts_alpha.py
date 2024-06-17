@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from tqdm import trange
 import logging
 
-from game.hex import Hex, Point, hex_neighbor, hex_add, hex_subtract
+from .hex import Hex, Point, hex_neighbor, hex_add, hex_subtract
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

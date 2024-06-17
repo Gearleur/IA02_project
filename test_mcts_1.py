@@ -4,7 +4,7 @@ import numpy as np
 import math
 import torch.nn as nn
 import torch.nn.functional as F
-from game import *
+from gopher import *
 
 # Définir les arguments pour MCTS
 args = {
