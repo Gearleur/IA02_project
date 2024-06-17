@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from gopher import *
 
     
-def main_alpha_gopher():
+#def main_alpha_gopher():
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Initialisation du jeu
