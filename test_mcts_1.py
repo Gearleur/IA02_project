@@ -4,10 +4,7 @@ import numpy as np
 import math
 import torch.nn as nn
 import torch.nn.functional as F
-from game.game_logic import GopherGame, DodoGame
-from game.player import Player, AIPlayer, RandomPlayer
-from game.hex import oddr_to_axial, axial_to_oddr
-from game.mcts_alpha import NodeAlpha, MCTSAlpha, MockResNet
+from game import *
 
 # Définir les arguments pour MCTS
 args = {

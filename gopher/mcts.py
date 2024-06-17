@@ -59,7 +59,7 @@ class Node:
         return child
     
     def simulate(self):
-        value, is_terminal = self.game.get_value_and_terminated(self.state, self.action_taken)
+        value, is_terminal = self.game.get_value_and_terminated(self.state, self.action_taken, 1)
         value = self.game.get_opponent_value(value)
         
         if is_terminal:
@@ -68,14 +68,14 @@ class Node:
         rollout_state = self.state.copy()
         rollout_player = 1
         while True:
-            valid_moves = self.game.get_valid_moves_encoded(rollout_state)
+            valid_moves = self.game.get_valid_moves_encoded(rollout_state, rollout_player)
             action = np.random.choice(np.where(valid_moves == 1)[0])
             rollout_state = self.game.get_next_state_encoded(rollout_state, action, rollout_player)
             value, is_terminal = self.game.get_value_and_terminated(rollout_state, action)
             if is_terminal:
-                if rollout_player == 2:
+                if rollout_player == -1:
                     value = self.game.get_opponent_value(value)
-                return value    
+                return value
             
             rollout_player = self.game.get_opponent(rollout_player)
             
@@ -102,7 +102,7 @@ class MCTS:
             while node.is_fully_expanded():
                 node = node.select()
                 
-            value, is_terminal = self.game.get_value_and_terminated(node.state, node.action_taken)
+            value, is_terminal = self.game.get_value_and_terminated(node.state, node.action_taken, 1)
             value = self.game.get_opponent_value(value)
             
             if not is_terminal:

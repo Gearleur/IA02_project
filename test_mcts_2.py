@@ -4,7 +4,7 @@ import numpy as np
 import math
 import torch.nn as nn
 import torch.nn.functional as F
-from game import *
+from gopher import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Initialiser le jeu

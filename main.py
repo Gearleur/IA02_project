@@ -5,10 +5,7 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
-from game.game_logic import GopherGame, DodoGame
-from game.player import Player, AIPlayer, RandomPlayer
-from game.hex import oddr_to_axial, axial_to_oddr, idx_to_hex, hex_to_idx, Hex
-from game.mcts_alpha import ResNet, ResBlock, NodeAlpha, MCTSAlpha
+from gopher import *
 
     
 def main_alpha_gopher():
