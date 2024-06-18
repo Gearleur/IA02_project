@@ -1,10 +1,20 @@
 import numpy as np
+from collections import namedtuple
 
 toutes_positions=[(3, 3), (0, 3), (1, 3), (2, 3),(2, 1), (3, 0), (3, 1), (3, 2), (0, 2), (1, 2), (2, 2), (1, 1), (2, 0),(-3, -3), (0, -3), (-1, -3), (-2, -3),(-2, -1), (-3, 0), (-3, -1), (-3, -2), (0, -2), (-1, -2),
                           (-2, -2), (-1, -1), (-2, 0), (-1,2),(-2,1),(-1,1),(-1,0),(-2,0),(-3,0),(2,-1),(1,-2),(1,-1),(0,-1),(0,-2),(0,-3)]
 
 directionB=[(1,0),(1,-1),(0,-1)]
 directionR=[(-1,0),(-1,1),(0,1)]
+
+Point = namedtuple("Point", ["x", "y"])
+Hex = namedtuple("Hex", ["q", "r", "s"])
+
+
+
+def hex_to_idx(hex, board_size):
+    return hex.r + board_size,hex.q + board_size
+
 class DodoGame:
     def __init__(self, board_size=4):
         self.size = board_size - 1
@@ -14,7 +24,6 @@ class DodoGame:
         return "DodoGame"
 
     def get_initial_state(self):
-
         Position_bleu = [(0, 4), (0, 3), (0, 5), (0, 6),(1, 3), (1, 4), (1, 5), (1, 6), (2, 4), (2, 5), (2, 6), (3, 5), (3, 6)]
         Position_rouge = [(3, 0), (3, 1), (4, 0), (4, 1),(4, 2), (5, 0), (5, 1), (5, 2), (5, 3), (6, 0),
                           (6, 1), (6, 2), (6, 3)]
@@ -32,12 +41,17 @@ class DodoGame:
     def get_current_player(self, state):
         return 1 if np.sum(state) % 2 == 0 else -1
 
-    def get_next_state(self, state, action, player):
+    def get_next_state_(self, state, action, player):
         q, r, s = action
         row = r + self.size
         col = q + self.size
         state[row, col] = player
         return state
+    def get_next_state(self, state, action, pion, player):
+        state[action[0],action[1]] = player
+        state[pion[0],pion[1]]=0
+        return state
+
 
     def get_next_state_idx(self, state, action, player):
         row, col = action
@@ -151,7 +165,10 @@ class DodoGame:
     def get_encoded_states(self, states):
         encoded_states = [self.get_encoded_state(state) for state in states]
         return np.array(encoded_states)
-'''
+
+
+
+#fonctionne mais le graphe est renverse par rapport au sujet
     def display(self, state):
         board_size = self.size
         for r in range(-board_size, board_size + 1):
@@ -169,7 +186,23 @@ class DodoGame:
                         print('.', end=' ')
             print()
 
-'''
+
+
+
+
+
+
+
+
+
+
 dodo=DodoGame()
 grid=dodo.get_initial_state()
 print(dodo.get_valid_moves(grid,1))
+
+print(dodo.get_next_state(grid,[2,0],[3,0],1))
+print(dodo.get_valid_moves(grid,1))
+
+#dodo.display(grid)
+
+
