@@ -1,5 +1,13 @@
 import numpy as np
 
+toutes_positions=[(3, 3), (0, 3), (1, 3), (2, 3),(2, 1), (3, 0), (3, 1), (3, 2), (0, 2), (1, 2), (2, 2), (1, 1), (2, 0),(-3, -3), (0, -3), (-1, -3), (-2, -3),(-2, -1), (-3, 0), (-3, -1), (-3, -2), (0, -2), (-1, -2),
+                          (-2, -2), (-1, -1), (-2, 0), (-1,2),(-2,1),(-1,1),(-1,0),(-2,0),(-3,0),(2,-1),(1,-2),(1,-1),(0,-1),(0,-2),(0,-3)]
+
+directionB=[(-1,0),(-1,-1),(0,-1)]
+directionR=[(1,0),(1,1),(0,1)]
+testa=(0,1)
+testb=(1,0)
+print(testa+testb)
 class DodoGame:
     def __init__(self, board_size=4):
         self.size = board_size - 1
@@ -10,9 +18,10 @@ class DodoGame:
 
     def get_initial_state(self):
 
-        Position_bleu = [(3, 3), (0, 3), (1, 3), (2, 3), (3, 0), (3, 1), (3, 2), (0, 2), (1, 2), (2, 2), (1, 1), (2, 0)]
-        Position_rouge = [(-3, -3), (0, -3), (-1, -3), (-2, -3), (-3, 0), (-3, -1), (-3, -2), (0, -2), (-1, -2),
+        Position_bleu = [(3, 3), (0, 3), (1, 3), (2, 3),(2, 1), (3, 0), (3, 1), (3, 2), (0, 2), (1, 2), (2, 2), (1, 1), (2, 0)]
+        Position_rouge = [(-3, -3), (0, -3), (-1, -3), (-2, -3),(-2, -1), (-3, 0), (-3, -1), (-3, -2), (0, -2), (-1, -2),
                           (-2, -2), (-1, -1), (-2, 0)]
+
         grid= np.zeros((2 * self.size +1, 2 * self.size +1), dtype=np.int8)
         for x, y in Position_bleu:
             grid[abs(x-self.size),abs(y+self.size)] = -1
@@ -21,8 +30,8 @@ class DodoGame:
         for x, y in Position_rouge:
             grid[abs(self.size - x), self.size + y] = 1
         print(grid)
+        return grid
 
-"""
     def get_current_player(self, state):
         return 1 if np.sum(state) % 2 == 0 else -1
 
@@ -44,59 +53,40 @@ class DodoGame:
         state[row, col] = player
         return state
 
-    def is_valid_move(self, state, action, player=None):
+#raisonnement en matrice et non hexa : mouvement valide si l'action est sur une case vide a cote d'un pion de son equipe
+    def is_valid_move(self, grid, action, pion, player=None):
         if player is None:
-            player = self.get_current_player(state)
+            player = self.get_current_player(grid)
 
         # Vérifiez si le mouvement est à l'intérieur des limites de l'hexagone
-        if abs(action.q) > self.size or abs(action.r) > self.size or abs(action.s) > self.size:
+        if abs(action[0]) > 2*self.size+1 or abs(action[1]) > 2*self.size+1:
             return False
 
-        # Vérifiez si la cellule est déjà occupée
-        x, y = hex_to_idx(action, self.size)
-        if state[x][y] != 0:  # Assumant que 0 signifie une cellule non occupée
+        if grid[action[0]][action[1]] != 0:
             return False
 
-        has_enemy_connection = False
+        if grid[pion[0]][pion[1]] != player:
+            return False
+
         has_friendly_connection = False
+        for d in directionR:
+            if action[0]==d[0]+pion[0] and action[1]==d[1]+pion[1]:
+                has_friendly_connection = True
+        return has_friendly_connection
 
-        for direction in range(6):
-            neighbor = hex_neighbor(action, direction)
-            if abs(neighbor.q) <= self.size and abs(neighbor.r) <= self.size and abs(neighbor.s) <= self.size:
-                nx, ny = hex_to_idx(neighbor, self.size)
-                if state[nx][ny] == player:
-                    has_friendly_connection = True
-                elif state[nx][ny] != 0:
-                    has_enemy_connection = True
-
-        return not has_friendly_connection and has_enemy_connection
-
-    def get_valid_moves(self, state, player=None):
-        valid_moves = set()
+#raisonnement en matrice : ici pour le joueur concerne
+    def get_valid_moves(self, grid, player=None):
+        valid_moves = []
         size = self.size
-        is_empty = not any(state.flatten())  # Check if the state matrix is empty
         if player is None:
-            current_player = self.get_current_player(state)
+            current_player = self.get_current_player(grid)
         else:
             current_player = player
-
-        if is_empty:
-            for q in range(-size, size + 1):
-                for r in range(-size, size + 1):
-                    s = -q - r
-                    x, y = hex_to_idx(Hex(q, r, s), size)
-                    if abs(q) <= size and abs(r) <= size and abs(s) <= size:
-                        valid_moves.add((x, y))
-        else:
-            for q in range(-size, size + 1):
-                for r in range(-size, size + 1):
-                    s = -q - r
-                    action = Hex(q, r, s)
-                    x, y = hex_to_idx(action, size)
-                    if self.is_valid_move(state, action, current_player):
-                        x, y = hex_to_idx(action, size)
-                        valid_moves.add((x, y))
-        return list(valid_moves)
+        for pos in toutes_positions:
+            for act in toutes_positions:
+                if self.is_valid_move(grid,act,pos,player):
+                    valid_moves.append([pos,act])
+        return valid_moves
 
     def get_valid_moves_encoded(self, state, player=None):
         board_size = self.size
@@ -151,7 +141,7 @@ class DodoGame:
     def get_encoded_states(self, states):
         encoded_states = [self.get_encoded_state(state) for state in states]
         return np.array(encoded_states)
-
+'''
     def display(self, state):
         board_size = self.size
         for r in range(-board_size, board_size + 1):
@@ -168,7 +158,7 @@ class DodoGame:
                     else:
                         print('.', end=' ')
             print()
-"""
 
+'''
 dodo=DodoGame()
 dodo.get_initial_state()
