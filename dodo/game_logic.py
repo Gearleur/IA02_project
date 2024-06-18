@@ -3,11 +3,8 @@ import numpy as np
 toutes_positions=[(3, 3), (0, 3), (1, 3), (2, 3),(2, 1), (3, 0), (3, 1), (3, 2), (0, 2), (1, 2), (2, 2), (1, 1), (2, 0),(-3, -3), (0, -3), (-1, -3), (-2, -3),(-2, -1), (-3, 0), (-3, -1), (-3, -2), (0, -2), (-1, -2),
                           (-2, -2), (-1, -1), (-2, 0), (-1,2),(-2,1),(-1,1),(-1,0),(-2,0),(-3,0),(2,-1),(1,-2),(1,-1),(0,-1),(0,-2),(0,-3)]
 
-directionB=[(-1,0),(-1,-1),(0,-1)]
+directionB=[(1,0),(1,-1),(0,-1)]
 directionR=[(1,0),(1,1),(0,1)]
-testa=(0,1)
-testb=(1,0)
-print(testa+testb)
 class DodoGame:
     def __init__(self, board_size=4):
         self.size = board_size - 1
@@ -18,17 +15,17 @@ class DodoGame:
 
     def get_initial_state(self):
 
-        Position_bleu = [(3, 3), (0, 3), (1, 3), (2, 3),(2, 1), (3, 0), (3, 1), (3, 2), (0, 2), (1, 2), (2, 2), (1, 1), (2, 0)]
-        Position_rouge = [(-3, -3), (0, -3), (-1, -3), (-2, -3),(-2, -1), (-3, 0), (-3, -1), (-3, -2), (0, -2), (-1, -2),
-                          (-2, -2), (-1, -1), (-2, 0)]
+        Position_bleu = [(0, 4), (0, 3), (0, 5), (0, 6),(1, 3), (1, 4), (1, 5), (1, 6), (2, 4), (2, 5), (2, 6), (3, 5), (3, 6)]
+        Position_rouge = [(3, 0), (3, 1), (4, 0), (4, 1),(4, 2), (5, 0), (5, 1), (5, 2), (5, 3), (6, 0),
+                          (6, 1), (6, 2), (6, 3)]
 
         grid= np.zeros((2 * self.size +1, 2 * self.size +1), dtype=np.int8)
         for x, y in Position_bleu:
-            grid[abs(x-self.size),abs(y+self.size)] = -1
+            grid[x,y] = -1
 
         # Set 'r' (rouge) at position_rouge
         for x, y in Position_rouge:
-            grid[abs(self.size - x), self.size + y] = 1
+            grid[x, y] = 1
         print(grid)
         return grid
 
@@ -65,13 +62,21 @@ class DodoGame:
         if grid[action[0]][action[1]] != 0:
             return False
 
+
         if grid[pion[0]][pion[1]] != player:
             return False
 
         has_friendly_connection = False
-        for d in directionR:
-            if action[0]==d[0]+pion[0] and action[1]==d[1]+pion[1]:
-                has_friendly_connection = True
+        if player==1:
+            for d in directionR:
+                if action[0]==d[0]+pion[0] and action[1]==d[1]+pion[1]:
+                    has_friendly_connection = True
+        if player==-1:
+            for d in directionB:
+                if action[0]==d[0]+pion[0]:
+                    if action[1]==d[1]+pion[1]:
+                        has_friendly_connection = True
+
         return has_friendly_connection
 
 #raisonnement en matrice : ici pour le joueur concerne
@@ -82,11 +87,16 @@ class DodoGame:
             current_player = self.get_current_player(grid)
         else:
             current_player = player
-        for pos in toutes_positions:
-            for act in toutes_positions:
-                if self.is_valid_move(grid,act,pos,player):
-                    valid_moves.append([pos,act])
+        for pos_x in range(2*self.size+1):
+            for pos_y in range(2*self.size+1):
+                pos=[pos_x,pos_y]
+                for act_x in range(2*self.size+1):
+                    for act_y in range(2*self.size+1):
+                        act=[act_x,act_y]
+                        if self.is_valid_move(grid,act,pos,player):
+                            valid_moves.append([pos,act])
         return valid_moves
+
 
     def get_valid_moves_encoded(self, state, player=None):
         board_size = self.size
@@ -161,4 +171,5 @@ class DodoGame:
 
 '''
 dodo=DodoGame()
-dodo.get_initial_state()
+grid=dodo.get_initial_state()
+print(dodo.get_valid_moves(grid,-1))
