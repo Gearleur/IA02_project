@@ -4,7 +4,7 @@ toutes_positions=[(3, 3), (0, 3), (1, 3), (2, 3),(2, 1), (3, 0), (3, 1), (3, 2),
                           (-2, -2), (-1, -1), (-2, 0), (-1,2),(-2,1),(-1,1),(-1,0),(-2,0),(-3,0),(2,-1),(1,-2),(1,-1),(0,-1),(0,-2),(0,-3)]
 
 directionB=[(1,0),(1,-1),(0,-1)]
-directionR=[(1,0),(1,1),(0,1)]
+directionR=[(-1,0),(-1,1),(0,1)]
 class DodoGame:
     def __init__(self, board_size=4):
         self.size = board_size - 1
@@ -172,4 +172,4 @@ class DodoGame:
 '''
 dodo=DodoGame()
 grid=dodo.get_initial_state()
-print(dodo.get_valid_moves(grid,-1))
+print(dodo.get_valid_moves(grid,1))
