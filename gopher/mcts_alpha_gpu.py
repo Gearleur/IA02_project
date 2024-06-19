@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class ResBlock(nn.Module):
+class ResBlockGPU(nn.Module):
     def __init__(self, num_hidden):
         super().__init__()
         self.conv1 = nn.Conv2d(num_hidden, num_hidden, kernel_size=3, padding=1)
@@ -29,7 +29,7 @@ class ResBlock(nn.Module):
         x = F.relu(x)
         return x
     
-class ResNet(nn.Module):
+class ResNetGPU(nn.Module):
     def __init__(self, game, num_resBlocks, num_hidden, device):
         super().__init__()
         
@@ -43,7 +43,7 @@ class ResNet(nn.Module):
         )
         
         self.backBone = nn.ModuleList(
-            [ResBlock(num_hidden) for _ in range(num_resBlocks)]
+            [ResBlockGPU(num_hidden) for _ in range(num_resBlocks)]
         )
         
         self.policyHead = nn.Sequential(
@@ -73,7 +73,7 @@ class ResNet(nn.Module):
         value = self.valueHead(x)
         return policy, value
     
-class NodeAlpha:
+class NodeAlphaGPU:
     def __init__(self, game, args, state, parent=None, action_taken=None, prior=0, visite_count=0):
         self.game = game
         self.args = args
@@ -116,7 +116,7 @@ class NodeAlpha:
                 child_state = self.game.get_next_state_encoded(child_state, action, 1)
                 child_state = self.game.change_perspective(child_state, player = -1)
                 
-                child = NodeAlpha(self.game, self.args, child_state, self, action, prob)
+                child = NodeAlphaGPU(self.game, self.args, child_state, self, action, prob)
                 self.children.append(child)
                 
                 logger.debug(f"Created new child node: {child_state} with action {action} and prior {prob}")
@@ -132,148 +132,18 @@ class NodeAlpha:
             self.parent.backpropagate(value)
 
 
-class MCTSAlpha:
-    def __init__(self, game, args, model):
-        self.game = game
-        self.args = args
-        self.model = model
-        
-    
-    @torch.no_grad()
-    def search(self, state):
-        root = NodeAlpha(self.game, self.args, state, visite_count=1)
-        
-        policy, _ = self.model(
-            torch.tensor(self.game.get_encoded_state(state, 1), device=self.model.device).unsqueeze(0)
-        )
-        policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
-        policy = (1 - self.args['dirichlet_epsilon']) * policy + self.args['dirichlet_epsilon'] \
-            * np.random.dirichlet([self.args['dirichlet_alpha']] * self.game.action_size)
-            
-        valid_moves = self.game.get_valid_moves_encoded(state, 1)
-        policy *= valid_moves
-        policy /= np.sum(policy)
-        root.expand(policy)
-        
-        
-        for _ in range(self.args['num_searches']):
-            node = root
-            
-            while node.is_fully_expanded():
-                node = node.select()
-                
-            value, is_terminal = self.game.get_value_and_terminated(node.state, -1)
-            value = self.game.get_opponent_value(value)
-            
-            if not is_terminal:
-                policy, value = self.model(
-                    torch.tensor(self.game.get_encoded_state(node.state, 1), device=self.model.device).unsqueeze(0)
-                )
-                policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
-                
-                
-                valid_moves = self.game.get_valid_moves_encoded(node.state, 1)
-                policy *= valid_moves
-                policy /= np.sum(policy)
-                
-                value = value.item()
-                
-                node.expand(policy)
-                
-            node.backpropagate(value)
-            
-            
-        action_probs = np.zeros(self.game.action_size)
-        for child in root.children:
-            action_probs[child.action_taken] = child.visit_count
-        action_probs /= np.sum(action_probs)
-        return action_probs
-    
-    
-class AlphaZero:
-    def __init__(self, model, optimizer, game, args):
-        self.model = model
-        self.optimizer = optimizer
-        self.game = game
-        self.args = args
-        self.mcts = MCTSAlpha(game, args, model)
-        
-    def selfPlay(self):
-        memory = []
-        player = 1
-        state = self.game.get_initial_state()
-        
-        while True:
-            neutral_state = self.game.change_perspective(state, player)
-            action_probs = self.mcts.search(neutral_state)
-            
-            memory.append((neutral_state, action_probs, player))
-            
-            temperature_action_probs = action_probs ** (1 / self.args['temperature'])
-            action = np.random.choice(self.game.action_size, p=action_probs)
-            
-            state = self.game.get_next_state_encoded(state, action, player)
-            
-            value, is_terminal = self.game.get_value_and_terminated(state, player)
-            
-            if is_terminal:
-                returnMemory = []
-                for hist_neutral_state, hist_action_probs, hist_player in memory:
-                    hist_outcome = value if hist_player == player else self.game.get_opponent_value(value)
-                    returnMemory.append((
-                        self.game.get_encoded_state(hist_neutral_state, -hist_player),
-                        hist_action_probs,
-                        hist_outcome
-                    ))
-                return returnMemory
-            
-            player = self.game.get_opponent(player)
-            
-            
-    
-    def train(self, memory):
-        random.shuffle(memory)
-        for batchIdx in range(0, len(memory), self.args['batch_size']):
-            sample = memory[batchIdx:min(len(memory) - 1, batchIdx + self.args['batch_size'])]
-            state, policy_targets, value_targets = zip(*sample)
-            
-            state, policy_targets, value_targets = np.array(state), np.array(policy_targets), np.array(value_targets).reshape(-1, 1)
-            
-            state = torch.tensor(state, dtype=torch.float32, device=self.model.device)
-            policy_targets = torch.tensor(policy_targets, dtype=torch.float32, device=self.model.device)
-            value_targets = torch.tensor(value_targets, dtype=torch.float32, device=self.model.device)
-            
-    def learn(self):
-        for iteration in range(self.args['num_iterations']):
-            memory = []
-            
-            self.model.eval()
-            for selfPlay_iteration in trange(self.args['num_selfPlay_iterations'] // self.args['num_parallel_games']):
-                memory += self.selfPlay()
-                
-            self.model.train()
-            for epoch in trange(self.args['num_epochs']):
-                self.train(memory)
-            
-            torch.save(self.model.state_dict(), f"model_{iteration}_{self.game}.pt")
-            torch.save(self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt")
-
-
-
-
-
-
-class MCTSAlphaParallel:
+class MCTSAlphaParallelGPU:
     def __init__(self, game, args, model, player=1):
         self.game = game
         self.args = args
         self.model = model
         self.player = player
+        self.device = model.module.device if isinstance(model, nn.DataParallel) else model.device
     
     @torch.no_grad()
     def search(self, states, spGames):
         policy, _ = self.model(
-            torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
+            torch.tensor(self.game.get_encoded_states(states, 1), device=self.device)
         )
         policy = torch.softmax(policy, axis=1).cpu().numpy()
         policy = (1 - self.args['dirichlet_epsilon']) * policy + self.args['dirichlet_epsilon'] \
@@ -285,7 +155,7 @@ class MCTSAlphaParallel:
             spg_policy *= valid_moves
             spg_policy /= np.sum(spg_policy)
             
-            spg.root = NodeAlpha(self.game, self.args, states[i], visite_count=1)
+            spg.root = NodeAlphaGPU(self.game, self.args, states[i], visite_count=1)
             spg.root.expand(spg_policy)
         
         
@@ -311,7 +181,7 @@ class MCTSAlphaParallel:
                 states = np.stack([spGames[mappingIdx].node.state for mappingIdx in expandable_spGames])
                 
                 policy, value = self.model(
-                    torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
+                    torch.tensor(self.game.get_encoded_states(states, 1), device=self.device)
                 )
                 policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
                 value = value.cpu().numpy()
@@ -326,17 +196,15 @@ class MCTSAlphaParallel:
                 
                 node.expand(spg_policy)
                 node.backpropagate(spg_value)
-                
-    
-    
-    
-class AlphaZeroParallel:
+
+class AlphaZeroParallelGPU:
     def __init__(self, model, optimizer, game, args):
         self.model = model
         self.optimizer = optimizer
         self.game = game
         self.args = args
-        self.mcts = MCTSAlphaParallel(game, args, model)
+        self.device = model.module.device if isinstance(model, nn.DataParallel) else model.device
+        self.mcts = MCTSAlphaParallelGPU(game, args, model)
         
     def selfPlay(self):
         return_memory = []
@@ -393,9 +261,11 @@ class AlphaZeroParallel:
             
             state, policy_targets, value_targets = np.array(state), np.array(policy_targets), np.array(value_targets).reshape(-1, 1)
             
-            state = torch.tensor(state, dtype=torch.float32, device=self.model.device)
-            policy_targets = torch.tensor(policy_targets, dtype=torch.float32, device=self.model.device)
-            value_targets = torch.tensor(value_targets, dtype=torch.float32, device=self.model.device)
+            state = torch.tensor(state, dtype=torch.float32, device=self.device)
+            policy_targets = torch.tensor(policy_targets, dtype=torch.float32, device=self.device)
+            value_targets = torch.tensor(value_targets, dtype=torch.float32, device=self.device)
+            
+            # Ajoutez votre code de perte et d'optimisation ici
             
     def learn(self):
         for iteration in range(self.args['num_iterations']):
@@ -419,22 +289,3 @@ class SPG:
         self.memory = []
         self.root = None
         self.node = None
-        
-
-
-
-class MockResNet(nn.Module):
-    def __init__(self, game, num_resBlocks, num_hidden, device):
-        super(MockResNet, self).__init__()
-        self.device = device
-        self.action_size = game.action_size
-        self.num_hidden = num_hidden
-        self.to(device)
-        
-    def forward(self, x):
-        batch_size = x.size(0)
-        # Politique factice : uniformément répartie
-        policy = torch.ones((batch_size, self.action_size), device=x.device) / self.action_size
-        # Valeur factice : nulle
-        value = torch.zeros((batch_size, 1), device=x.device)
-        return policy, value

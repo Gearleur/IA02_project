@@ -13,7 +13,7 @@ gopher = GopherGame(board_size=6)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = ResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
+model = ResNetGPU(gopher, num_resBlocks=9, num_hidden=256, device=device)
 
 # Utiliser DataParallel pour utiliser plusieurs GPUs
 if torch.cuda.device_count() > 1:
@@ -37,5 +37,5 @@ args = {
     'dirichlet_alpha': 0.3,
 }
 
-alpha_zero = AlphaZeroParallel(model, optimizer, gopher, args)
-alpha_zero.learn()
+alpha_zerogpu = AlphaZeroParallelGPU(model, optimizer, gopher, args)
+alpha_zerogpu.learn()
