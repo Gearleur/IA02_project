@@ -25,11 +25,11 @@ model.to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
 
 args = {
-    'num_searches': 600,
+    'num_searches': 800,
     'C': 2,
     'num_iterations': 6,
-    'num_selfPlay_iterations': 150,
-    'num_parallel_games': 10,
+    'num_selfPlay_iterations': 500,
+    'num_parallel_games': 50,
     'num_epochs': 4,
     'batch_size': 128,
     'temperature': 1,
