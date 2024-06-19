@@ -38,4 +38,4 @@ args = {
 }
 
 alpha_zerogpu = AlphaZeroParallelGPU(model, optimizer, gopher, args)
-alpha_zero.learn()
+alpha_zerogpu.learn()
