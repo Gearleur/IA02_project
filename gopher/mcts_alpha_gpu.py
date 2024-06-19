@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import trange
 import logging
+from torch.utils.data import DataLoader, TensorDataset
 
 from .hex import Hex, Point, hex_neighbor, hex_add, hex_subtract
 
@@ -139,34 +140,31 @@ class MCTSAlphaParallelGPU:
         self.model = model
         self.player = player
         self.device = model.module.device if isinstance(model, nn.DataParallel) else model.device
-    
+
     @torch.no_grad()
     def search(self, states, spGames):
-        policy, _ = self.model(
+        policies, _ = self.model(
             torch.tensor(self.game.get_encoded_states(states, 1), device=self.device)
         )
-        policy = torch.softmax(policy, axis=1).cpu().numpy()
-        policy = (1 - self.args['dirichlet_epsilon']) * policy + self.args['dirichlet_epsilon'] \
-            * np.random.dirichlet([self.args['dirichlet_alpha']] * self.game.action_size, size=policy.shape[0])
-            
+        policies = torch.softmax(policies, axis=1).cpu().numpy()
+        policies = (1 - self.args['dirichlet_epsilon']) * policies + self.args['dirichlet_epsilon'] * np.random.dirichlet(
+            [self.args['dirichlet_alpha']] * self.game.action_size, size=policies.shape[0])
+
         for i, spg in enumerate(spGames):
-            spg_policy = policy[i]
+            spg_policy = policies[i]
             valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
             spg_policy *= valid_moves
             spg_policy /= np.sum(spg_policy)
-            
+
             spg.root = NodeAlphaGPU(self.game, self.args, states[i], visite_count=1)
             spg.root.expand(spg_policy)
-        
-        
+
         for search in range(self.args['num_searches']):
             for spg in spGames:
-                spg.node = None
                 node = spg.root
-                
                 while node.is_fully_expanded():
                     node = node.select()
-                    
+                
                 value, is_terminal = self.game.get_value_and_terminated(node.state, -1)
                 value = self.game.get_opponent_value(value)
                 
@@ -174,28 +172,27 @@ class MCTSAlphaParallelGPU:
                     node.backpropagate(value)
                 else:
                     spg.node = node
-                    
-            expandable_spGames = [mappingIdx for mappingIdx in range(len(spGames)) if spGames[mappingIdx].node is not None]
-            
-            if len(expandable_spGames) > 0:
-                states = np.stack([spGames[mappingIdx].node.state for mappingIdx in expandable_spGames])
-                
-                policy, value = self.model(
+
+            expandable_spGames = [i for i, spg in enumerate(spGames) if spg.node is not None]
+
+            if expandable_spGames:
+                states = np.stack([spGames[i].node.state for i in expandable_spGames])
+                policies, values = self.model(
                     torch.tensor(self.game.get_encoded_states(states, 1), device=self.device)
                 )
-                policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
-                value = value.cpu().numpy()
-            
-            for i, mappingIdx in enumerate(expandable_spGames):
-                node = spGames[mappingIdx].node
-                spg_policy, spg_value = policy[i], value[i]
-                
-                valid_moves = self.game.get_valid_moves_encoded(node.state, 1)
-                spg_policy *= valid_moves
-                spg_policy /= np.sum(spg_policy)
-                
-                node.expand(spg_policy)
-                node.backpropagate(spg_value)
+                policies = torch.softmax(policies, axis=1).cpu().numpy()
+                values = values.cpu().numpy()
+
+                for i, spg_idx in enumerate(expandable_spGames):
+                    node = spGames[spg_idx].node
+                    spg_policy, spg_value = policies[i], values[i]
+
+                    valid_moves = self.game.get_valid_moves_encoded(node.state, 1)
+                    spg_policy *= valid_moves
+                    spg_policy /= np.sum(spg_policy)
+
+                    node.expand(spg_policy)
+                    node.backpropagate(spg_value)
 
 class AlphaZeroParallelGPU:
     def __init__(self, model, optimizer, game, args):
@@ -255,15 +252,26 @@ class AlphaZeroParallelGPU:
     
     def train(self, memory):
         random.shuffle(memory)
-        for batchIdx in range(0, len(memory), self.args['batch_size']):
-            sample = memory[batchIdx:min(len(memory) - 1, batchIdx + self.args['batch_size'])]
-            state, policy_targets, value_targets = zip(*sample)
+        dataset = TensorDataset(
+            torch.tensor([m[0] for m in memory], dtype=torch.float32),
+            torch.tensor([m[1] for m in memory], dtype=torch.float32),
+            torch.tensor([m[2] for m in memory], dtype=torch.float32).reshape(-1, 1)
+        )
+        dataloader = DataLoader(dataset, batch_size=self.args['batch_size'], shuffle=True)
+        
+        for batch in dataloader:
+            states, policy_targets, value_targets = batch
+            states = states.to(self.device)
+            policy_targets = policy_targets.to(self.device)
+            value_targets = value_targets.to(self.device)
             
-            state, policy_targets, value_targets = np.array(state), np.array(policy_targets), np.array(value_targets).reshape(-1, 1)
-            
-            state = torch.tensor(state, dtype=torch.float32, device=self.device)
-            policy_targets = torch.tensor(policy_targets, dtype=torch.float32, device=self.device)
-            value_targets = torch.tensor(value_targets, dtype=torch.float32, device=self.device)
+            self.optimizer.zero_grad()
+            policy_preds, value_preds = self.model(states)
+            loss_policy = F.cross_entropy(policy_preds, policy_targets)
+            loss_value = F.mse_loss(value_preds, value_targets)
+            loss = loss_policy + loss_value
+            loss.backward()
+            self.optimizer.step()
             
             # Ajoutez votre code de perte et d'optimisation ici
             
