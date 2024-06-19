@@ -12,7 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 gopher = GopherGame(board_size=6)
 
 state = gopher.get_initial_state()
-# state = gopher.get_next_state(state, (-4, 0, 4), 1)
+state = gopher.get_next_state(state, (-4, 0, 4), 1)
 
 encoded_state = gopher.get_encoded_state(state)
 print(encoded_state)
@@ -20,7 +20,7 @@ print(encoded_state)
 tensor_state = torch.tensor(encoded_state, device=device).unsqueeze(0)
 
 model = ResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
-model.load_state_dict(torch.load("model_0_GopherGame.pt", map_location=device))
+model.load_state_dict(torch.load("model_1_GopherGame.pt", map_location=device))
 model.eval()
 
 policy, value = model(tensor_state)
@@ -34,8 +34,15 @@ print(tensor_state)
 
 plt.bar(range(gopher.action_size), policy*gopher.get_valid_moves_encoded(state))
 
-#recuperer le coups avec le moins de probabilité =/= 0
-action = np.argmin(policy*gopher.get_valid_moves_encoded(state))
-state = gopher.get_next_state_encoded(state, action, -1)
+#prendre le argmin de la policy différent de 0
+action = policy*gopher.get_valid_moves_encoded(state)
+valeurs_non_nulles = action[action != 0]
+
+# Trouver le minimum des valeurs non nulles
+minimum_non_nul = np.min(valeurs_non_nulles) if valeurs_non_nulles.size > 0 else None
+position = np.where(action == minimum_non_nul)[0][0]
+
+state = gopher.get_next_state_encoded(state, position, -1)
 gopher.display(state)
+
 plt.show()

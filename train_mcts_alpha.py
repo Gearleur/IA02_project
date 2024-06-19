@@ -14,15 +14,19 @@ model = ResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
 
+# model.load_state_dict(torch.load("model_1_GopherGame.pt", map_location=device))
+# optimizer.load_state_dict(torch.load("optimizer_1_GopherGame.pt", map_location=device))
+ 
+
 args = {
     'num_searches': 600,
     'C': 2,
     'num_iterations': 6,
     'num_selfPlay_iterations': 150,
-    'num_parallel_games': 10,
+    'num_parallel_games': 30,
     'num_epochs': 4,
     'batch_size': 128,
-    'temperature': 1,
+    'temperature': 1.25,
     'dirichlet_epsilon': 0.25,
     'dirichlet_alpha': 0.3,
 }

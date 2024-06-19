@@ -137,14 +137,13 @@ class MCTSAlpha:
         self.game = game
         self.args = args
         self.model = model
-        
     
     @torch.no_grad()
     def search(self, state):
         root = NodeAlpha(self.game, self.args, state, visite_count=1)
         
         policy, _ = self.model(
-            torch.tensor(self.game.get_encoded_state(state, 1), device=self.model.device).unsqueeze(0)
+            torch.tensor(self.game.get_encoded_state(state, -1), device=self.model.device).unsqueeze(0)
         )
         policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
         policy = (1 - self.args['dirichlet_epsilon']) * policy + self.args['dirichlet_epsilon'] \
@@ -167,7 +166,7 @@ class MCTSAlpha:
             
             if not is_terminal:
                 policy, value = self.model(
-                    torch.tensor(self.game.get_encoded_state(node.state, 1), device=self.model.device).unsqueeze(0)
+                    torch.tensor(self.game.get_encoded_state(node.state, -1), device=self.model.device).unsqueeze(0)
                 )
                 policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
                 
@@ -273,7 +272,7 @@ class MCTSAlphaParallel:
     @torch.no_grad()
     def search(self, states, spGames):
         policy, _ = self.model(
-            torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
+            torch.tensor(self.game.get_encoded_states(states, -1), device=self.model.device)
         )
         policy = torch.softmax(policy, axis=1).cpu().numpy()
         policy = (1 - self.args['dirichlet_epsilon']) * policy + self.args['dirichlet_epsilon'] \
@@ -311,7 +310,7 @@ class MCTSAlphaParallel:
                 states = np.stack([spGames[mappingIdx].node.state for mappingIdx in expandable_spGames])
                 
                 policy, value = self.model(
-                    torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
+                    torch.tensor(self.game.get_encoded_states(states, -1), device=self.model.device)
                 )
                 policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
                 value = value.cpu().numpy()
@@ -361,6 +360,7 @@ class AlphaZeroParallel:
                 spg.memory.append((spg.root.state, action_probs, player))
                 
                 temperature_action_probs = action_probs ** (1 / self.args['temperature'])
+                temperature_action_probs /= np.sum(temperature_action_probs)
                 
                 action = np.random.choice(self.game.action_size, p=temperature_action_probs)
                 

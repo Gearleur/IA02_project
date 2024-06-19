@@ -6,11 +6,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from gopher import *
-
+from dodo import *
     
 def main_alpha_gopher():
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Initialiser le jeu
     gopher = GopherGame(board_size=6)
@@ -23,22 +22,49 @@ def main_alpha_gopher():
     }
 
     model = ResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
-    model.load_state_dict(torch.load("model_0_GopherGame.pt", map_location=device))
+    model.load_state_dict(torch.load("model_1_GopherGame.pt", map_location=device))
     model.eval()
 
 
     # Initialiser MCTS
     mcts = MCTSAlpha(game=gopher, args=args, model=model)
+
     state = gopher.get_initial_state()
+
+    player = 1
+
+    
     state = gopher.get_next_state(state, (-4, 0, 4), 1)
     neutral_state = gopher.change_perspective(state, -1)
-    action = np.argmax(mcts.search(neutral_state))
+    mcts_probs = mcts.search(neutral_state)
+    action = np.argmax(mcts_probs)
     state = gopher.get_next_state_encoded(state, action, -1)
     gopher.display(state)
     
+def main_dodo():
+    dodo = DodoGame()
+    state = dodo.get_initial_state()
     
+    player = 1
+    while True:
+        dodo.display(state)
+        if player == 1:
+            action = random.choice(dodo.get_valid_moves_encoded(state, player))
+            state = dodo.get_next_state_encoded(state, action, player)
+        else:
+            action = random.choice(dodo.get_valid_moves_encoded(state, player))
+            state = dodo.get_next_state_encoded(state, action, player)
+        
+        value, is_terminal = dodo.get_value_and_terminated(state, player)
+        
+        if is_terminal:
+            dodo.display(state)
+            print(f"Player {player} has won")
+            break
+        
+        player = dodo.get_opponent(player)
     
     
 if __name__ == "__main__":
-    main_alpha_gopher()
+    main_dodo()
     

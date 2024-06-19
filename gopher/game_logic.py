@@ -106,13 +106,13 @@ class GopherGame:
         return valid_moves_encoded.flatten()
     
     def check_win(self, state, player):
-        return len(self.get_valid_moves(state, player=player)) == 0
+        return len(self.get_valid_moves(state, player=-player)) == 0
     
     def get_value_and_terminated(self, state, player = None):
         if player is None:
             player = self.get_current_player(state)
             
-        if self.check_win(state, -player):
+        if self.check_win(state, player):
             return 1, True
         return 0, False
     
@@ -131,7 +131,7 @@ class GopherGame:
             player = self.get_current_player(state)
         
         board_size = self.size
-        current_player = self.get_current_player(state)
+        current_player = player
         opponent = -current_player
 
         # Crée les couches pour l'état encodé

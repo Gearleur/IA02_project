@@ -4,12 +4,13 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 from gopher import *
+from dodo import *
 
 # Spécifiez les GPUs à utiliser
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"  # Utiliser les GPUs 0, 1 et 2
 
-gopher = GopherGame(board_size=6)
+gopher = DodoGame()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -27,9 +28,9 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
 args = {
     'num_searches': 800,
     'C': 2,
-    'num_iterations': 7,
-    'num_selfPlay_iterations': 150,
-    'num_parallel_games': 10,
+    'num_iterations': 6,
+    'num_selfPlay_iterations': 500,
+    'num_parallel_games': 50,
     'num_epochs': 4,
     'batch_size': 128,
     'temperature': 1,
@@ -37,5 +38,5 @@ args = {
     'dirichlet_alpha': 0.3,
 }
 
-alpha_zerogpu = AlphaZeroParallelGPU(model, optimizer, gopher, args)
+alpha_zerogpu = AlphaZeroParallelGPU(model, optimizer, dodo, args)
 alpha_zerogpu.learn()
