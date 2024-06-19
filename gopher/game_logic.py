@@ -93,6 +93,9 @@ class GopherGame:
         return list(valid_moves)
     
     def get_valid_moves_encoded(self, state, player=None):
+        if player is None:
+            player = self.get_current_player(state)
+        
         board_size = self.size
         valid_moves_encoded = np.zeros((2 * board_size + 1, 2 * board_size + 1), dtype=np.float32)
         valid_moves = self.get_valid_moves(state, player)
@@ -102,15 +105,15 @@ class GopherGame:
         
         return valid_moves_encoded.flatten()
     
-    def check_win(self, state, action, player):
+    def check_win(self, state, player):
         return len(self.get_valid_moves(state, player=player)) == 0
     
-    def get_value_and_terminated(self, state, action, player = None):
+    def get_value_and_terminated(self, state, player = None):
         if player is None:
             player = self.get_current_player(state)
             
-        if self.check_win(state, action, player):
-            return player, True
+        if self.check_win(state, -player):
+            return 1, True
         return 0, False
     
     def get_opponent(self, player):
@@ -123,7 +126,10 @@ class GopherGame:
         return player * state
     
     
-    def get_encoded_state(self, state):
+    def get_encoded_state(self, state, player=None):
+        if player is None:
+            player = self.get_current_player(state)
+        
         board_size = self.size
         current_player = self.get_current_player(state)
         opponent = -current_player
@@ -133,7 +139,7 @@ class GopherGame:
         layer_opponent = (state == opponent).astype(np.float32)
         layer_valid_moves = np.zeros((2 * board_size + 1, 2 * board_size + 1), dtype=np.float32)
 
-        valid_moves = self.get_valid_moves(state)
+        valid_moves = self.get_valid_moves(state, player=player)
         for (x, y) in valid_moves:
             layer_valid_moves[x, y] = 1
 
@@ -142,8 +148,10 @@ class GopherGame:
 
         return encoded_state
     
-    def get_encoded_states(self, states):
-        encoded_states = [self.get_encoded_state(state) for state in states]
+    def get_encoded_states(self, states, player=None):
+        if player is None:
+            player = self.get_current_player(states[0])
+        encoded_states = [self.get_encoded_state(state, player) for state in states]
         return np.array(encoded_states)
 
     def display(self, state):

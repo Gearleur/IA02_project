@@ -22,10 +22,12 @@ while True:
 
     state = gopher.get_next_state_idx(state, action, player)
     
-    value, is_terminal = gopher.get_value_and_terminated(state, action)
+    value, is_terminal = gopher.get_value_and_terminated(state, action, player)
     
     if is_terminal:
         gopher.display(state)
-        print(f"Game over! Player {-player} wins!")
+        print(gopher.get_valid_moves(state, 1))
+        print(gopher.get_valid_moves(state, -1))
+        print(f"Game over! Player {player} wins!")
         break
     player = gopher.get_opponent(player)

@@ -74,7 +74,7 @@ class ResNet(nn.Module):
         return policy, value
     
 class NodeAlpha:
-    def __init__(self, game, args, state, parent=None, action_taken=None, prior=0, visite_count=0, ):
+    def __init__(self, game, args, state, parent=None, action_taken=None, prior=0, visite_count=0):
         self.game = game
         self.args = args
         self.state = state
@@ -143,7 +143,7 @@ class MCTSAlpha:
         root = NodeAlpha(self.game, self.args, state, visite_count=1)
         
         policy, _ = self.model(
-            torch.tensor(self.game.get_encoded_state(state), device=self.model.device).unsqueeze(0)
+            torch.tensor(self.game.get_encoded_state(state, 1), device=self.model.device).unsqueeze(0)
         )
         policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
         policy = (1 - self.args['dirichlet_epsilon']) * policy + self.args['dirichlet_epsilon'] \
@@ -161,14 +161,15 @@ class MCTSAlpha:
             while node.is_fully_expanded():
                 node = node.select()
                 
-            value, is_terminal = self.game.get_value_and_terminated(node.state, node.action_taken, 1)
+            value, is_terminal = self.game.get_value_and_terminated(node.state, -1)
             value = self.game.get_opponent_value(value)
             
             if not is_terminal:
                 policy, value = self.model(
-                    torch.tensor(self.game.get_encoded_state(node.state), device=self.model.device).unsqueeze(0)
+                    torch.tensor(self.game.get_encoded_state(node.state, 1), device=self.model.device).unsqueeze(0)
                 )
                 policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
+                
                 
                 valid_moves = self.game.get_valid_moves_encoded(node.state, 1)
                 policy *= valid_moves
@@ -212,14 +213,14 @@ class AlphaZero:
             
             state = self.game.get_next_state_encoded(state, action, player)
             
-            value, is_terminal = self.game.get_value_and_terminated(state, action, player)
+            value, is_terminal = self.game.get_value_and_terminated(state, player)
             
             if is_terminal:
                 returnMemory = []
                 for hist_neutral_state, hist_action_probs, hist_player in memory:
                     hist_outcome = value if hist_player == player else self.game.get_opponent_value(value)
                     returnMemory.append((
-                        self.game.get_encoded_state(hist_neutral_state),
+                        self.game.get_encoded_state(hist_neutral_state, -hist_player),
                         hist_action_probs,
                         hist_outcome
                     ))
@@ -262,15 +263,16 @@ class AlphaZero:
 
 
 class MCTSAlphaParallel:
-    def __init__(self, game, args, model):
+    def __init__(self, game, args, model, player=1):
         self.game = game
         self.args = args
         self.model = model
+        self.player = player
     
     @torch.no_grad()
     def search(self, states, spGames):
         policy, _ = self.model(
-            torch.tensor(self.game.get_encoded_states(states), device=self.model.device)
+            torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
         )
         policy = torch.softmax(policy, axis=1).cpu().numpy()
         policy = (1 - self.args['dirichlet_epsilon']) * policy + self.args['dirichlet_epsilon'] \
@@ -294,7 +296,7 @@ class MCTSAlphaParallel:
                 while node.is_fully_expanded():
                     node = node.select()
                     
-                value, is_terminal = self.game.get_value_and_terminated(node.state, node.action_taken, player = 1)
+                value, is_terminal = self.game.get_value_and_terminated(node.state, -1)
                 value = self.game.get_opponent_value(value)
                 
                 if is_terminal:
@@ -308,7 +310,7 @@ class MCTSAlphaParallel:
                 states = np.stack([spGames[mappingIdx].node.state for mappingIdx in expandable_spGames])
                 
                 policy, value = self.model(
-                    torch.tensor(self.game.get_encoded_states(states), device=self.model.device)
+                    torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
                 )
                 policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
                 value = value.cpu().numpy()
@@ -321,8 +323,9 @@ class MCTSAlphaParallel:
                 spg_policy *= valid_moves
                 spg_policy /= np.sum(spg_policy)
                 
-                node.expand(spg_policy)   
+                node.expand(spg_policy)
                 node.backpropagate(spg_value)
+                
     
     
     
@@ -343,12 +346,12 @@ class AlphaZeroParallel:
             states = np.stack([spg.state for spg in spGames])
             
             neutral_states = self.game.change_perspective(states, player)
-            
             self.mcts.search(neutral_states, spGames)
             
             for i in range(len(spGames))[::-1]:
                 spg = spGames[i]
-            
+                if i == 0:
+                    self.game.display(spg.state)
                 action_probs = np.zeros(self.game.action_size)
                 for child in spg.root.children:
                     action_probs[child.action_taken] = child.visit_count
@@ -357,17 +360,18 @@ class AlphaZeroParallel:
                 spg.memory.append((spg.root.state, action_probs, player))
                 
                 temperature_action_probs = action_probs ** (1 / self.args['temperature'])
-                action = np.random.choice(self.game.action_size, p=action_probs)
+                
+                action = np.random.choice(self.game.action_size, p=temperature_action_probs)
                 
                 spg.state = self.game.get_next_state_encoded(spg.state, action, player)
                 
-                value, is_terminal = self.game.get_value_and_terminated(spg.state, action, player)
-                
+                value, is_terminal = self.game.get_value_and_terminated(spg.state, player)
+
                 if is_terminal:
                     for hist_neutral_state, hist_action_probs, hist_player in spg.memory:
                         hist_outcome = value if hist_player == player else self.game.get_opponent_value(value)
                         return_memory.append((
-                            self.game.get_encoded_state(hist_neutral_state),
+                            self.game.get_encoded_state(hist_neutral_state, -hist_player),
                             hist_action_probs,
                             hist_outcome
                         ))

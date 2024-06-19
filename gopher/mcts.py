@@ -21,7 +21,7 @@ class Node:
         self.action_taken = action_taken
         
         self.children = []
-        self.expandable_moves = np.where(game.get_valid_moves_encoded(state) == 1)[0]
+        self.expandable_moves = np.where(game.get_valid_moves_encoded(state, -1) == 1)[0]
         
         self.visit_count = 0
         self.value_sum = 0
@@ -102,7 +102,7 @@ class MCTS:
             while node.is_fully_expanded():
                 node = node.select()
                 
-            value, is_terminal = self.game.get_value_and_terminated(node.state, node.action_taken, 1)
+            value, is_terminal = self.game.get_value_and_terminated(node.state, 1)
             value = self.game.get_opponent_value(value)
             
             if not is_terminal:
