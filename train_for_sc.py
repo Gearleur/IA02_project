@@ -15,7 +15,7 @@ gopher = DodoGame()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = ResNetGPU(gopher, num_resBlocks=9, num_hidden=256, device=device)
+model = ResNetGPU(gopher, num_resBlocks=9, num_hidden=128, device=device)
 
 # Utiliser DataParallel pour utiliser plusieurs GPUs
 if torch.cuda.device_count() > 1:
@@ -29,7 +29,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
 args = {
     "num_searches": 800,
     "C": 2,
-    "num_iterations": 6,
+    "num_iterations": 7,
     "num_selfPlay_iterations": 500,
     "num_parallel_games": 50,
     "num_epochs": 4,
