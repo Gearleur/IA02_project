@@ -3,10 +3,8 @@ from collections import namedtuple
 import random
 
 # Directions for blue and red players
-DIRECTIONS = {
-    'B': [(1, 0), (1, -1), (0, -1)],
-    'R': [(-1, 0), (-1, 1), (0, 1)]
-}
+directionB = [(1, 0), (1, -1), (0, -1)]
+directionR = [(-1, 0), (-1, 1), (0, 1)]
 
 Hex = namedtuple("Hex", ["q", "r", "s"])
 
@@ -22,19 +20,18 @@ class DodoGame:
         return "DodoGame"
 
     def get_initial_state(self):
-        # Predefined positions for blue and red players
-        positions_bleu = [(0, 4), (0, 3), (0, 5), (0, 6), (1, 3), (1, 4), (1, 5), (1, 6), (2, 4), (2, 5), (2, 6), (3, 5), (3, 6)]
-        positions_rouge = [(3, 0), (3, 1), (4, 0), (4, 1), (4, 2), (5, 0), (5, 1), (5, 2), (5, 3), (6, 0), (6, 1), (6, 2), (6, 3)]
+        Position_bleu = [(0, 4), (0, 3), (0, 5), (0, 6), (1, 3), (1, 4), (1, 5), (1, 6), (2, 4), (2, 5), (2, 6), (3, 5), (3, 6)]
+        Position_rouge = [(3, 0), (3, 1), (4, 0), (4, 1), (4, 2), (5, 0), (5, 1), (5, 2), (5, 3), (6, 0), (6, 1), (6, 2), (6, 3)]
 
         grid = np.zeros((2 * self.size + 1, 2 * self.size + 1), dtype=np.int8)
-        for x, y in positions_bleu:
+        for x, y in Position_bleu:
             grid[x, y] = -1
-        for x, y in positions_rouge:
+        for x, y in Position_rouge:
             grid[x, y] = 1
         return grid
 
     def get_current_player(self, state):
-        return 1 if np.sum(state) % 2 == 0 else -1
+        return 1 if np.sum(state == 1) == np.sum(state == -1) else -1
 
     def get_next_state(self, state, action, pion, player):
         new_state = state.copy()
@@ -43,7 +40,7 @@ class DodoGame:
         return new_state
 
     def is_valid_move(self, grid, action, pion, player=None):
-        caseInterdite = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (4, 6), (2, 0), (5, 6), (6, 6), (6, 5), (6, 4), (5, 5)]
+        caseInterdite = [(0,0),(0,1),(0,2),(1,0),(1,1),(4,6),(2,0),(5,6),(6,6),(6,5),(6,4),(5,5)]
 
         if player is None:
             player = self.get_current_player(grid)
@@ -67,9 +64,9 @@ class DodoGame:
         valid_moves = []
         for pos_x in range(2 * self.size + 1):
             for pos_y in range(2 * self.size + 1):
+                pion = [pos_x, pos_y]
                 if grid[pos_x, pos_y] == player:
-                    pion = [pos_x, pos_y]
-                    for d in (DIRECTIONS['R'] if player == 1 else DIRECTIONS['B']):
+                    for d in (directionR if player == 1 else directionB):
                         action = [pos_x + d[0], pos_y + d[1]]
                         if self.is_valid_move(grid, action, pion, player):
                             valid_moves.append([pion, action])
@@ -104,13 +101,24 @@ class DodoGame:
             print()
 
 def evaluate(state, player):
-    return np.sum(state == -player)
+    if player == 1:
+        return -np.sum(state == -1)
+    else:
+        return np.sum(state == 1)
+
+transposition_table = {}
 
 def minimax(game, state, depth, alpha, beta, maximizing_player):
+    state_tuple = tuple(map(tuple, state))
+    if state_tuple in transposition_table:
+        return transposition_table[state_tuple]
+
     current_player = game.get_current_player(state)
     value, terminated = game.get_value_and_terminated(state, current_player)
     if depth == 0 or terminated:
-        return evaluate(state, current_player), None
+        evaluation = evaluate(state, current_player)
+        transposition_table[state_tuple] = (evaluation, None)
+        return evaluation, None
 
     valid_moves = game.get_valid_moves(state, current_player)
     best_move = None
@@ -126,6 +134,7 @@ def minimax(game, state, depth, alpha, beta, maximizing_player):
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break
+        transposition_table[state_tuple] = (max_eval, best_move)
         return max_eval, best_move
     else:
         min_eval = float('inf')
@@ -138,26 +147,25 @@ def minimax(game, state, depth, alpha, beta, maximizing_player):
             beta = min(beta, eval)
             if beta <= alpha:
                 break
+        transposition_table[state_tuple] = (min_eval, best_move)
         return min_eval, best_move
 
 def random_move(game, state, player):
     valid_moves = game.get_valid_moves(state, player)
     return random.choice(valid_moves) if valid_moves else None
 
-def play_game(display_game=False):
+def play_game():
     game = DodoGame()
     state = game.get_initial_state()
     current_player = 1
 
     while True:
-        if display_game:
-            game.display(state)
         value, terminated = game.get_value_and_terminated(state, current_player)
         if terminated:
             return value
 
         if current_player == 1:
-            _, move = minimax(game, state, 10, -float('inf'), float('inf'), True)
+            _, move = minimax(game, state, 10, -float('inf'), float('inf'), True)  # Reduced depth for quicker execution
         else:
             move = random_move(game, state, current_player)
 
@@ -165,19 +173,16 @@ def play_game(display_game=False):
             state = game.get_next_state(state, move[1], move[0], current_player)
         current_player *= -1
 
-def simulate_games(num_games=10):
-    red_wins = 0
-    blue_wins = 0
+def main():
+    games = 50
+    ai_wins = 0
 
-    for _ in range(num_games):
+    for _ in range(games):
         result = play_game()
         if result == 1:
-            red_wins += 1
-        elif result == -1:
-            blue_wins += 1
+            ai_wins += 1
 
-    print(f"Red (Minimax) won {red_wins} times.")
-    print(f"Blue (Random) won {blue_wins} times.")
+    print(f" {ai_wins}")
 
 if __name__ == "__main__":
-    simulate_games(1)
+    main()
