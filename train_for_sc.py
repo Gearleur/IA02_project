@@ -38,5 +38,5 @@ args = {
     "dirichlet_alpha": 0.3,
 }
 
-alpha_zerogpu = AlphaZeroParallelGPU(model, optimizer, dodo, args)
+alpha_zerogpu = AlphaZeroParallelGPU(model, optimizer, gopher, args)
 alpha_zerogpu.learn()
