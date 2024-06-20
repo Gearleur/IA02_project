@@ -223,6 +223,15 @@ class MCTSAlphaParallelGPU:
                 )
                 policies = torch.softmax(policies, axis=1).cpu().numpy()
                 values = values.cpu().numpy()
+                
+                for i in range(policies.shape[0]):
+                    valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
+                    for idx in self.corner_indices:
+                        if valid_moves[idx] == 1:
+                            policies[i, idx] *= self.args.get('corner_weight', 1.5)
+                    policies[i] *= valid_moves
+                    if np.sum(policies[i]) > 0:
+                        policies[i] /= np.sum(policies[i])
 
                 for i, spg_idx in enumerate(expandable_spGames):
                     node = spGames[spg_idx].node
