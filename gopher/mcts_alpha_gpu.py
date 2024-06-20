@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from tqdm import trange
 import logging
 from torch.utils.data import DataLoader, TensorDataset
+import os
 
 from .hex import Hex, Point, hex_neighbor, hex_add, hex_subtract
 
@@ -320,6 +321,10 @@ class AlphaZeroParallelGPU:
             # Ajoutez votre code de perte et d'optimisation ici
 
     def learn(self):
+        # Spécifiez le répertoire de sauvegarde
+        save_dir = "models"
+        os.makedirs(save_dir, exist_ok=True)  # Crée le répertoire s'il n'existe pas
+        
         for iteration in range(self.args["num_iterations"]):
             memory = []
 
@@ -333,10 +338,13 @@ class AlphaZeroParallelGPU:
             for epoch in trange(self.args["num_epochs"]):
                 self.train(memory)
 
-            torch.save(self.model.state_dict(), f"model_{iteration}_{self.game}.pt")
-            torch.save(
-                self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt"
-            )
+            # Construire le chemin complet des fichiers de modèle et d'optimiseur
+            model_path = os.path.join(save_dir, f"model_{iteration}_{self.game}.pt")
+            optimizer_path = os.path.join(save_dir, f"optimizer_{iteration}_{self.game}.pt")
+            
+            # Enregistrer le modèle et l'état de l'optimiseur
+            torch.save(self.model.state_dict(), model_path)
+            torch.save(self.optimizer.state_dict(), optimizer_path)
 
 
 class SPG:
