@@ -156,6 +156,14 @@ class MCTSAlphaParallelGPU:
         self.device = (
             model.module.device if isinstance(model, nn.DataParallel) else model.device
         )
+        self.corner_indices = [
+            5,
+            10,
+            55,
+            65,
+            110,
+            115,
+        ]
 
     @torch.no_grad()
     def search(self, states, spGames):
@@ -169,6 +177,14 @@ class MCTSAlphaParallelGPU:
             [self.args["dirichlet_alpha"]] * self.game.action_size,
             size=policies.shape[0],
         )
+        
+        for i in range(policy.shape[0]):
+            valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
+            for idx in self.corner_indices:
+                if (
+                    valid_moves[idx] == 1
+                ):  # Vérifier si l'emplacement est un coup valide
+                    policy[i, idx] *= self.args.get("corner_weight", 1.5)
 
         for i, spg in enumerate(spGames):
             spg_policy = policies[i]
