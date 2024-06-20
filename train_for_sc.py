@@ -4,14 +4,13 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 from gopher import *
-from dodo import *
 
 # Spécifiez les GPUs à utiliser
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"  # Utiliser les GPUs 0, 1 et 2
 
-gopher = DodoGame()
+gopher = GopherGame()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
