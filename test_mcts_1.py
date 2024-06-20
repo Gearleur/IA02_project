@@ -7,9 +7,9 @@ import torch.nn.functional as F
 from gopher import *
 
 # Définir les arguments pour MCTS
-args = {"C": 2, "num_searches": 2000, "dirichlet_epsilon": 0.0, "dirichlet_alpha": 0.3}
+args = {"C": 2, "num_searches": 600, "dirichlet_epsilon": 0.0, "dirichlet_alpha": 0.3}
 # Initialiser le jeu
-gopher = GopherGame(board_size=6)
+gopher = GopherGame(board_size=8)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # model random pour essayer

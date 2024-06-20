@@ -10,7 +10,7 @@ import os
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"  # Utiliser les GPUs 0, 1 et 2
 
-gopher = GopherGame()
+gopher = GopherGame(board_size=8)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -26,13 +26,13 @@ model.to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
 
 args = {
-    "num_searches": 800,
+    "num_searches": 500,
     "C": 2,
     "num_iterations": 8,
     "num_selfPlay_iterations": 160,
-    "num_parallel_games": 40,
+    "num_parallel_games": 20,
     "num_epochs": 4,
-    "batch_size": 16,
+    "batch_size": 32,
     "temperature": 1,
     "dirichlet_epsilon": 0.25,
     "dirichlet_alpha": 0.3,
