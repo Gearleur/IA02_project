@@ -52,4 +52,4 @@ def encoded_to_server(encoded, board_size):
     q = col - board_size
     r = row - board_size
     s = -q - r
-    return (q, s)
+    return (q, -r)

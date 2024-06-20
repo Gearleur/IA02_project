@@ -210,3 +210,19 @@ class DodoGame:
         end_y = end_pos % (2 * self.size + 1)
 
         return (start_x, start_y), (end_x, end_y)
+    
+    def decode_action_serveur(self, encoded_action):
+        total_positions = (2 * self.size + 1) ** 2
+        start_pos = encoded_action // total_positions
+        end_pos = encoded_action % total_positions
+
+        start_x = start_pos // (2 * self.size + 1)
+        start_y = start_pos % (2 * self.size + 1)
+
+        end_x = end_pos // (2 * self.size + 1)
+        end_y = end_pos % (2 * self.size + 1)
+        
+        q_start, r_start = encoded_to_server(start_x, start_y, self.size)
+        q_end, r_end = encoded_to_server(end_x, end_y, self.size)
+        
+        return (q_start, r_start), (q_end, r_end)
