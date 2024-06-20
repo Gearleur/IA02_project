@@ -7,17 +7,12 @@ import torch.nn.functional as F
 from gopher import *
 
 # Définir les arguments pour MCTS
-args = {
-    'C': 2,
-    'num_searches': 2000,
-    'dirichlet_epsilon': 0.,
-    'dirichlet_alpha': 0.3
-}
+args = {"C": 2, "num_searches": 2000, "dirichlet_epsilon": 0.0, "dirichlet_alpha": 0.3}
 # Initialiser le jeu
 gopher = GopherGame(board_size=6)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#model random pour essayer
+# model random pour essayer
 mock_resnet = MockResNet(gopher, num_resBlocks=5, num_hidden=128, device=device)
 # Initialiser MCTS
 mcts = MCTSAlpha(game=gopher, args=args, model=mock_resnet)
@@ -29,22 +24,22 @@ player = 1
 while True:
     gopher.display(state)
     if player == 1:
-        action= random.choice(gopher.get_valid_moves(state))
+        action = random.choice(gopher.get_valid_moves(state))
         state = gopher.get_next_state_idx(state, action, player)
     else:
         neutral_state = gopher.change_perspective(state, -1)
         mcts_probs = mcts.search(neutral_state)
         action = np.argmax(mcts_probs)
         state = gopher.get_next_state_encoded(state, action, player)
-    #current player,
-    
+    # current player,
+
     value, is_terminal = gopher.get_value_and_terminated(state, player)
-    
+
     if is_terminal:
         gopher.display(state)
         (print(gopher.get_valid_moves(state, 1)))
         (print(gopher.get_valid_moves(state, -1)))
         print(f"Game over! Player {player} wins!")
         break
-    
+
     player = -player
