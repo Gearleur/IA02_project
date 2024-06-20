@@ -170,7 +170,7 @@ def play_game():
             break
 
         if current_player == 1:
-            _, move = minimax(game, state, 12, -float('inf'), float('inf'), True)
+            _, move = minimax(game, state,21, -float('inf'), float('inf'), True)
         else:
             move = random_move(game, state, current_player)
 

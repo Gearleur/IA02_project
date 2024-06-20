@@ -43,6 +43,8 @@ class DodoGame:
         return new_state
 
     def is_valid_move(self, grid, action, pion, player=None):
+        caseInterdite = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (4, 6), (2, 0), (5, 6), (6, 6), (6, 5), (6, 4), (5, 5)]
+
         if player is None:
             player = self.get_current_player(grid)
 
@@ -52,7 +54,10 @@ class DodoGame:
         if grid[action[0]][action[1]] != 0 or grid[pion[0]][pion[1]] != player:
             return False
 
-        directions = DIRECTIONS['R'] if player == 1 else DIRECTIONS['B']
+        if tuple(action) in caseInterdite:
+            return False
+
+        directions = directionR if player == 1 else directionB
         return any(action[0] == d[0] + pion[0] and action[1] == d[1] + pion[1] for d in directions)
 
     def get_valid_moves(self, grid, player=None):

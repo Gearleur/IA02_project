@@ -47,29 +47,22 @@ class DodoGame:
         return state
 
     def is_valid_move(self, grid, action, pion, player=None):
+        caseInterdite = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (4, 6), (2, 0), (5, 6), (6, 6), (6, 5), (6, 4), (5, 5)]
+
         if player is None:
             player = self.get_current_player(grid)
 
-        if abs(action[0]) > 2 * self.size + 1 or abs(action[1]) > 2 * self.size + 1:
+        if not (0 <= action[0] < 2 * self.size + 1 and 0 <= action[1] < 2 * self.size + 1):
             return False
 
-        if grid[action[0]][action[1]] != 0:
+        if grid[action[0]][action[1]] != 0 or grid[pion[0]][pion[1]] != player:
             return False
 
-        if grid[pion[0]][pion[1]] != player:
+        if tuple(action) in caseInterdite:
             return False
 
-        has_friendly_connection = False
-        if player == 1:
-            for d in directionR:
-                if action[0] == d[0] + pion[0] and action[1] == d[1] + pion[1]:
-                    has_friendly_connection = True
-        if player == -1:
-            for d in directionB:
-                if action[0] == d[0] + pion[0] and action[1] == d[1] + pion[1]:
-                    has_friendly_connection = True
-
-        return has_friendly_connection
+        directions = directionR if player == 1 else directionB
+        return any(action[0] == d[0] + pion[0] and action[1] == d[1] + pion[1] for d in directions)
 
     def get_valid_moves(self, grid, player=None):
         valid_moves = []
@@ -121,7 +114,7 @@ dodo = DodoGame()
 grid = dodo.get_initial_state()
 print(dodo.get_valid_moves(grid, 1))
 
-print(dodo.get_next_state(grid, [2, 0], [3, 0], 1))
+print(dodo.get_next_state(grid, [2, 1], [3, 0], 1))
 print(dodo.get_valid_moves(grid, 1))
 
 
