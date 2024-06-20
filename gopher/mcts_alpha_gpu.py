@@ -178,13 +178,14 @@ class MCTSAlphaParallelGPU:
             size=policies.shape[0],
         )
         
-        for i in range(policy.shape[0]):
+        for i in range(policies.shape[0]):
             valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
             for idx in self.corner_indices:
                 if (
                     valid_moves[idx] == 1
                 ):  # Vérifier si l'emplacement est un coup valide
-                    policy[i, idx] *= self.args.get("corner_weight", 1.5)
+                    policies[i, idx] *= self.args.get("corner_weight", 1.5)
+        
 
         for i, spg in enumerate(spGames):
             spg_policy = policies[i]
