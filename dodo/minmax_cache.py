@@ -101,11 +101,19 @@ def evaluate(state, player):
     else:
         return np.sum(state == 1)
 
+transposition_table = {}
+
 def minimax(game, state, depth, alpha, beta, maximizing_player):
+    state_tuple = tuple(map(tuple, state))
+    if state_tuple in transposition_table:
+        return transposition_table[state_tuple]
+
     current_player = game.get_current_player(state)
     value, terminated = game.get_value_and_terminated(state, current_player)
     if depth == 0 or terminated:
-        return evaluate(state, current_player), None
+        evaluation = evaluate(state, current_player)
+        transposition_table[state_tuple] = (evaluation, None)
+        return evaluation, None
 
     valid_moves = game.get_valid_moves(state, current_player)
     best_move = None
@@ -121,6 +129,7 @@ def minimax(game, state, depth, alpha, beta, maximizing_player):
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break
+        transposition_table[state_tuple] = (max_eval, best_move)
         return max_eval, best_move
     else:
         min_eval = float('inf')
@@ -133,6 +142,7 @@ def minimax(game, state, depth, alpha, beta, maximizing_player):
             beta = min(beta, eval)
             if beta <= alpha:
                 break
+        transposition_table[state_tuple] = (min_eval, best_move)
         return min_eval, best_move
 
 def random_move(game, state, player):
@@ -152,12 +162,10 @@ def play_game():
                 print("Red wins!")
             elif value == -1:
                 print("Blue wins!")
-            else:
-                print("It's a draw!")
             break
 
         if current_player == 1:
-            _, move = minimax(game, state, 7, -float('inf'), float('inf'), True)
+            _, move = minimax(game, state, 12, -float('inf'), float('inf'), True)
         else:
             move = random_move(game, state, current_player)
 

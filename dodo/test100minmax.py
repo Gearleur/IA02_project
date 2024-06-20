@@ -3,8 +3,10 @@ from collections import namedtuple
 import random
 
 # Directions for blue and red players
-directionB = [(1, 0), (1, -1), (0, -1)]
-directionR = [(-1, 0), (-1, 1), (0, 1)]
+DIRECTIONS = {
+    'B': [(1, 0), (1, -1), (0, -1)],
+    'R': [(-1, 0), (-1, 1), (0, 1)]
+}
 
 Hex = namedtuple("Hex", ["q", "r", "s"])
 
@@ -20,13 +22,14 @@ class DodoGame:
         return "DodoGame"
 
     def get_initial_state(self):
-        Position_bleu = [(0, 4), (0, 3), (0, 5), (0, 6), (1, 3), (1, 4), (1, 5), (1, 6), (2, 4), (2, 5), (2, 6), (3, 5), (3, 6)]
-        Position_rouge = [(3, 0), (3, 1), (4, 0), (4, 1), (4, 2), (5, 0), (5, 1), (5, 2), (5, 3), (6, 0), (6, 1), (6, 2), (6, 3)]
+        # Predefined positions for blue and red players
+        positions_bleu = [(0, 4), (0, 3), (0, 5), (0, 6), (1, 3), (1, 4), (1, 5), (1, 6), (2, 4), (2, 5), (2, 6), (3, 5), (3, 6)]
+        positions_rouge = [(3, 0), (3, 1), (4, 0), (4, 1), (4, 2), (5, 0), (5, 1), (5, 2), (5, 3), (6, 0), (6, 1), (6, 2), (6, 3)]
 
         grid = np.zeros((2 * self.size + 1, 2 * self.size + 1), dtype=np.int8)
-        for x, y in Position_bleu:
+        for x, y in positions_bleu:
             grid[x, y] = -1
-        for x, y in Position_rouge:
+        for x, y in positions_rouge:
             grid[x, y] = 1
         return grid
 
@@ -49,7 +52,7 @@ class DodoGame:
         if grid[action[0]][action[1]] != 0 or grid[pion[0]][pion[1]] != player:
             return False
 
-        directions = directionR if player == 1 else directionB
+        directions = DIRECTIONS['R'] if player == 1 else DIRECTIONS['B']
         return any(action[0] == d[0] + pion[0] and action[1] == d[1] + pion[1] for d in directions)
 
     def get_valid_moves(self, grid, player=None):
@@ -59,9 +62,9 @@ class DodoGame:
         valid_moves = []
         for pos_x in range(2 * self.size + 1):
             for pos_y in range(2 * self.size + 1):
-                pion = [pos_x, pos_y]
                 if grid[pos_x, pos_y] == player:
-                    for d in (directionR if player == 1 else directionB):
+                    pion = [pos_x, pos_y]
+                    for d in (DIRECTIONS['R'] if player == 1 else DIRECTIONS['B']):
                         action = [pos_x + d[0], pos_y + d[1]]
                         if self.is_valid_move(grid, action, pion, player):
                             valid_moves.append([pion, action])
@@ -96,10 +99,7 @@ class DodoGame:
             print()
 
 def evaluate(state, player):
-    if player == 1:
-        return -np.sum(state == -1)
-    else:
-        return np.sum(state == 1)
+    return np.sum(state == -player)
 
 def minimax(game, state, depth, alpha, beta, maximizing_player):
     current_player = game.get_current_player(state)
@@ -139,25 +139,20 @@ def random_move(game, state, player):
     valid_moves = game.get_valid_moves(state, player)
     return random.choice(valid_moves) if valid_moves else None
 
-def play_game():
+def play_game(display_game=False):
     game = DodoGame()
     state = game.get_initial_state()
     current_player = 1
 
     while True:
-        game.display(state)
+        if display_game:
+            game.display(state)
         value, terminated = game.get_value_and_terminated(state, current_player)
         if terminated:
-            if value == 1:
-                print("Red wins!")
-            elif value == -1:
-                print("Blue wins!")
-            else:
-                print("It's a draw!")
-            break
+            return value
 
         if current_player == 1:
-            _, move = minimax(game, state, 7, -float('inf'), float('inf'), True)
+            _, move = minimax(game, state, 10, -float('inf'), float('inf'), True)
         else:
             move = random_move(game, state, current_player)
 
@@ -165,5 +160,19 @@ def play_game():
             state = game.get_next_state(state, move[1], move[0], current_player)
         current_player *= -1
 
+def simulate_games(num_games=10):
+    red_wins = 0
+    blue_wins = 0
+
+    for _ in range(num_games):
+        result = play_game()
+        if result == 1:
+            red_wins += 1
+        elif result == -1:
+            blue_wins += 1
+
+    print(f"Red (Minimax) won {red_wins} times.")
+    print(f"Blue (Random) won {blue_wins} times.")
+
 if __name__ == "__main__":
-    play_game()
+    simulate_games(1)
