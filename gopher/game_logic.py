@@ -6,6 +6,7 @@ from typing import List, Tuple
 
 Cell = Tuple[int, int]
 
+
 class GopherGame:
     def __init__(self, board_size=6):
         self.size = board_size - 1
@@ -190,15 +191,16 @@ class GopherGame:
                     else:
                         print(".", end=" ")
             print()
-            
 
-    def serveur_state_to_gopher(self, server_state: List[Tuple[Tuple[int, int], int]]) -> List[List[int]]:
+    def serveur_state_to_gopher(
+        self, server_state: List[Tuple[Tuple[int, int], int]]
+    ) -> List[List[int]]:
         # Taille du tableau
         array_size = 2 * self.size + 1
-        
+
         # Initialiser le tableau 2D avec 0
         board = np.zeros((array_size, array_size), dtype=np.int8)
-        
+
         # Utiliser cell_to_grid pour convertir et remplir le tableau
         for cell, value in server_state:
             q = cell[0]
@@ -210,18 +212,12 @@ class GopherGame:
                 board[x][y] = 1
             elif value == 2:
                 board[x][y] = -1
-        
+
         return board
-    
-    
+
     def encoded_to_server(self, encoded):
         rows, cols = 2 * self.size + 1, 2 * self.size + 1
         row, col = np.unravel_index(encoded, (rows, cols))
         q = col - self.size
         r = row - self.size
-        return (q,-r)
-        
-        
-            
-
-        
+        return (q, -r)

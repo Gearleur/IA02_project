@@ -44,4 +44,3 @@ def idx_to_hex(x, y, board_size):
 
 def hex_to_idx(hex, board_size):
     return hex.r + board_size, hex.q + board_size
-

@@ -10,10 +10,14 @@ from dodo import *
 import time
 
 
-
 def main_alpha_gopher():
     # Définir les arguments pour MCTS
-    args = {"C": 2, "num_searches": 1200, "dirichlet_epsilon": 0.0, "dirichlet_alpha": 0.3}
+    args = {
+        "C": 2,
+        "num_searches": 1200,
+        "dirichlet_epsilon": 0.0,
+        "dirichlet_alpha": 0.3,
+    }
     # Initialiser le jeu
     gopher = GopherGame(board_size=6)
 
@@ -59,10 +63,16 @@ def main_alpha_gopher():
             break
 
         player = -player
-        
+
+
 def main_rng_gopher(num_games=25):
     # Définir les arguments pour MCTS
-    args = {"C": 2, "num_searches": 600, "dirichlet_epsilon": 0.0, "dirichlet_alpha": 0.3}
+    args = {
+        "C": 2,
+        "num_searches": 600,
+        "dirichlet_epsilon": 0.0,
+        "dirichlet_alpha": 0.3,
+    }
     # Initialiser le jeu
     gopher = GopherGame(board_size=6)
 
@@ -118,9 +128,8 @@ def main_rng_gopher(num_games=25):
     print(f"After {num_games} games:")
     print(f"MCTS wins: {mcts_wins}")
     print(f"RNG wins: {rng_wins}")
-    
 
-    
+
 def main_dodo():
     game = DodoGame2()
     state = game.init_board()
@@ -128,7 +137,7 @@ def main_dodo():
     turns = 0
     while True:
         game.display(state)
-        
+
         if game.is_terminal_state(state, current_player):
             break
 
@@ -136,18 +145,27 @@ def main_dodo():
             move = random.choice(game.get_valid_moves(state, current_player))
             print(move)
         else:
-            move, evaluation = minimax_dodo(game, state, 10, float('-inf'), float('inf'), True, current_player, game.memo)
+            move, evaluation = minimax_dodo(
+                game,
+                state,
+                10,
+                float("-inf"),
+                float("inf"),
+                True,
+                current_player,
+                game.memo,
+            )
             print(game.get_valid_moves(state, current_player))
             print(move, evaluation)
-        state = game.get_next_state(state, move[0], move[1])
-        
+        state = game.get_next_state(state, move[0], move[1], current_player)
+
         current_player = -current_player  # Change player
         turns += 1
 
     print(f"Game over in {turns} turns.")
-    print(f'Gagnant: {current_player}')
+    print(f"Gagnant: {current_player}")
     game.display(state)
-    
+
 
 def main_gopher_classique():
     game = GopherGame2()
@@ -158,22 +176,30 @@ def main_gopher_classique():
         game.display(state)
         
         if game.is_terminal_state(state, current_player):
+            
             break
 
-        if current_player == 1:  # Minimax player
+        if current_player == 1:
             move = random.choice(game.get_valid_moves(state, current_player))
-            print(move)
         else:
-            move = minimax_gopher(game, state, 10, float('-inf'), float('inf'), True, current_player, game.memo)[1]
+            move = minimax_gopher(
+                game,
+                state,
+                10,
+                float("-inf"),
+                float("inf"),
+                True,
+                current_player,
+                game.memo,
+            )[1]
         state = game.get_next_state(state, move, current_player)
-        
+
         current_player = -current_player  # Change player
         turns += 1
 
     print(f"Game over in {turns} turns.")
-    print(f'Gagnant: {current_player}')
+    print(f"Gagnant: {-current_player}")
     game.display(state)
-
 
 
 if __name__ == "__main__":

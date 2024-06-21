@@ -18,6 +18,7 @@ class DodoGame2:
         self.board_size = 2 * self.size + 1
         self.initial_state = self.init_board()
         self.memo = {}
+        self.eval_cache = {}
 
     def init_board(self):
         state = {}
@@ -66,12 +67,11 @@ class DodoGame2:
     def is_valid_move(self, state, start, end):
         return end in state and state[end] == 0
 
-    def get_next_state(self, state, start, end):
-        new_state = state.copy()
-        player = new_state[start]
-        new_state[end] = player
-        new_state[start] = 0
-        return new_state
+    def get_next_state(self, state, start, end, player):
+        next_state = state.copy()
+        next_state[end] = player
+        next_state[start] = 0
+        return next_state
 
     def is_terminal_state(self, state, player):
         return len(self.get_valid_moves(state, player)) == 0
@@ -94,4 +94,14 @@ class DodoGame2:
                         else:
                             print(".", end=" ")
             print()
+            
     
+    def evaluate_state_terminal(self, state, player):
+        return 1000
+        
+        
+    def evaluate_state(state, player):
+        if player == 1:
+            return -np.sum(state == -1)
+        else:
+            return np.sum(state == 1)

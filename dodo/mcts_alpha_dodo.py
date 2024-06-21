@@ -578,4 +578,3 @@ class MockResNet(nn.Module):
         # Valeur factice : nulle
         value = torch.zeros((batch_size, 1), device=x.device)
         return policy, value
-    
