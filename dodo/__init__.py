@@ -5,3 +5,7 @@ from .mcts_alpha_dodo import (
     MCTSDodoParallel,
     AlphaZeroDodoParallel,
 )
+
+from .minmax import minimax_dodo
+
+from .dodo_2 import DodoGame2

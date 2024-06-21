@@ -3,7 +3,6 @@ from .hex_2 import (
     Point,
     hex_add,
     hex_subtract,
-    hex_neighbor,
     idx_to_hex,
     hex_to_idx,
 )
@@ -22,6 +21,7 @@ class DodoGame:
         self.action_size = (
             self.board_size * self.board_size * self.board_size * self.board_size
         )
+        self.transposition_table = {}
 
     def __repr__(self):
         return "DodoGame"
@@ -130,6 +130,15 @@ class DodoGame:
         if self.check_win(state, player, change_perspective):
             return player, True
         return 0, False
+    
+    def evaluate_state(self, state, player):
+        opponent = self.get_opponent(player)
+        player_valid_moves = self.count_valid_moves(state, player)
+        opponent_valid_moves = self.count_valid_moves(state, opponent)
+        return opponent_valid_moves - player_valid_moves
+
+    def count_valid_moves(self, state, player):
+        return len(self.get_valid_moves(state, player))
 
     def get_encoded_state(self, state, player, change_perspective=False):
         board_size = 2 * self.size + 1
@@ -211,18 +220,31 @@ class DodoGame:
 
         return (start_x, start_y), (end_x, end_y)
     
-    def decode_action_serveur(self, encoded_action):
-        total_positions = (2 * self.size + 1) ** 2
-        start_pos = encoded_action // total_positions
-        end_pos = encoded_action % total_positions
-
-        start_x = start_pos // (2 * self.size + 1)
-        start_y = start_pos % (2 * self.size + 1)
-
-        end_x = end_pos // (2 * self.size + 1)
-        end_y = end_pos % (2 * self.size + 1)
+    def serveur_state_to_gopher(self, server_state: List[Tuple[Tuple[int, int], int]]) -> List[List[int]]:
+        # Taille du tableau
+        array_size = 2 * self.size + 1
         
-        q_start, r_start = encoded_to_server(start_x, start_y, self.size)
-        q_end, r_end = encoded_to_server(end_x, end_y, self.size)
+        # Initialiser le tableau 2D avec 0
+        board = np.zeros((array_size, array_size), dtype=np.int8)
         
-        return (q_start, r_start), (q_end, r_end)
+        # Utiliser cell_to_grid pour convertir et remplir le tableau
+        for cell, value in server_state:
+            q = cell[0]
+            r = cell[1]
+            s = -q + r
+            hex = Hex(q, -r, s)
+            x, y = hex_to_idx(hex, self.size)
+            if value == 1:
+                board[x][y] = 1
+            elif value == 2:
+                board[x][y] = -1
+        
+        return board
+    
+    
+    def encoded_to_server(self, encoded):
+        rows, cols = 2 * self.size + 1, 2 * self.size + 1
+        row, col = np.unravel_index(encoded, (rows, cols))
+        q = col - self.size
+        r = row - self.size
+        return (q,-r)

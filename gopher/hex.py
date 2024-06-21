@@ -45,11 +45,3 @@ def idx_to_hex(x, y, board_size):
 def hex_to_idx(hex, board_size):
     return hex.r + board_size, hex.q + board_size
 
-
-def encoded_to_server(encoded, board_size):
-    rows, cols = 2 * board_size + 1, 2 * board_size + 1
-    row, col = np.unravel_index(encoded, (rows, cols))
-    q = col - board_size
-    r = row - board_size
-    s = -q - r
-    return (q, -r)

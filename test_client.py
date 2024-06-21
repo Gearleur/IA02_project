@@ -24,16 +24,19 @@ def initialize(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if game == GOPHER_STR:
-        gopher = GopherGame(board_size=hex_size)
-        model = ResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
-        model.load_state_dict(torch.load("model_0_GopherGame.pt", map_location=device))
-        mcts = MCTSAlpha(game=gopher, args={"C": 2, "num_searches": 1800, "dirichlet_epsilon": 0.0, "dirichlet_alpha": 0.3}, model=model)
-        return {"game": gopher, "model": model, "mcts": mcts, "device": device, "type": GOPHER_STR}
-    elif game == DODO_STR:
-        dodo = DodoGame()
-        model = MockResNet(dodo, num_resBlocks=5, num_hidden=128, device=device)
-        mcts = MCTSDodo(game=dodo, args={"C": 2, "num_searches": 1800, "dirichlet_epsilon": 0.0, "dirichlet_alpha": 0.3}, model=model)
-        return {"game": dodo, "model": model, "mcts": mcts, "device": device, "type": DODO_STR}
+        game_instance = GopherGame(board_size=hex_size)
+        if hex_size == 6:
+            model = ResNet(game_instance, num_resBlocks=9, num_hidden=256, device=device)
+            model.load_state_dict(torch.load("model_0_GopherGame.pt", map_location=device))
+        else:
+            model = MockResNet(game_instance, num_resBlocks=5, num_hidden=128, device=device)
+        mcts = MCTSAlpha(game=game_instance, args={"C": 2, "num_searches": 1200, "dirichlet_epsilon": 0.0, "dirichlet_alpha": 0.3}, model=model)
+    else:
+        game_instance = DodoGame()
+        model = MockResNet(game_instance, num_resBlocks=5, num_hidden=128, device=device)
+        mcts = MCTSDodo(game=game_instance, args={"C": 2, "num_searches": 600, "dirichlet_epsilon": 0.0, "dirichlet_alpha": 0.3}, model=model)
+
+    return {"game": game_instance, "model": model, "mcts": mcts, "device": device, "type": game}
     
 def strategy_brain(
     env: Environment, state: State, player: Player, time_left: Time
@@ -45,12 +48,20 @@ def strategy_brain(
     mcts = env["mcts"]
 
     if env["type"] == GOPHER_STR:
+        state = game.serveur_state_to_gopher(state)
+        if player == 2:
+            player = -1
+        game.display(state)
         neutral_state = game.change_perspective(state, player)
         mcts_probs = mcts.search(neutral_state)
         action_encoded = np.argmax(mcts_probs)
-        action = encoded_to_server(game, action_encoded, player)
+        state = game.get_next_state_encoded(state, action_encoded, player)
+        action = game.encoded_to_server(action_encoded)
         
     elif env["type"] == DODO_STR:
+        state = game.serveur_state_to_gopher(state)
+        if player == 2:
+            player = -1
         change_perspective = player != 1
         neutral_state = game.change_perspective(state, player, change_perspective)
         mcts_probs = mcts.search(neutral_state, change_perspective)

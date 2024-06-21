@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from tqdm import trange
 import logging
 
-from .hex_2 import Hex, Point, hex_neighbor, hex_add, hex_subtract
+from .hex_2 import Hex, Point, hex_add, hex_subtract
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -186,7 +186,7 @@ class MCTSDodo:
         policy = (1 - self.args["dirichlet_epsilon"]) * policy + self.args[
             "dirichlet_epsilon"
         ] * np.random.dirichlet([self.args["dirichlet_alpha"]] * self.game.action_size)
-
+        print(state)
         valid_moves = self.game.get_valid_moves_encoded(state, 1, change_perspective)
         policy *= valid_moves
         policy /= np.sum(policy)
@@ -578,3 +578,4 @@ class MockResNet(nn.Module):
         # Valeur factice : nulle
         value = torch.zeros((batch_size, 1), device=x.device)
         return policy, value
+    

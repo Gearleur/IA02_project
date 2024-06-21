@@ -12,6 +12,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 gopher = GopherGame(board_size=6)
 
 state = gopher.get_initial_state()
+moves = gopher.get_valid_moves(state)
+tableau = np.zeros((11, 11))
+for move in moves:
+    tableau[move[0], move[1]] = 1
+print(tableau)
 moves = gopher.get_valid_moves_encoded(state)
 state = gopher.get_next_state(state, (-3, 0, 3), 1)
 actions = gopher.get_valid_moves_encoded(state)

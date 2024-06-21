@@ -5,9 +5,10 @@ from .hex import (
     hex_add,
     hex_subtract,
     idx_to_hex,
-    encoded_to_server,
 )
 from .game_logic import GopherGame
+from .gopher_2 import GopherGame2
+from .minimax_gopher import minimax_gopher
 from .mcts_alpha import (
     ResNet,
     ResBlock,
@@ -17,11 +18,4 @@ from .mcts_alpha import (
     AlphaZeroParallel,
     MCTSAlphaParallel,
     MockResNet,
-)
-from .mcts_alpha_gpu import (
-    ResNetGPU,
-    ResBlockGPU,
-    NodeAlphaGPU,
-    AlphaZeroParallelGPU,
-    MCTSAlphaParallelGPU,
 )
