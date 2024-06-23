@@ -186,6 +186,21 @@ Ce projet, clairement, j'ai adoré le faire, j'ai appris énormément de choses.
 ### Attention Important 
 Avant d'installer les requirements, il faut installer PyTorch et CUDA en fonction de votre machine. Pour cela, je vous invite à vous rendre sur le site de PyTorch et de suivre les instructions pour installer PyTorch en fonction de votre machine.  voir [Pytorch](https://pytorch.org/get-started/locally/)
 
+### Création de l'environnement virtuel
+```bash
+python -m venv env
+```
+
+### Activation de l'environnement virtuel
+#### Pour Windows
+```bash
+source env/Scripts/activate
+```
+#### Pour Linux Mac
+```bash
+source env/bin/activate
+```
+
 ### Installation des requierements
 ```bash
 pip install -r requirements.txt
@@ -220,5 +235,3 @@ python visualisation.py
 ```bash
 python main.py
 ```
-
-
