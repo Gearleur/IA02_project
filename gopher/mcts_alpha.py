@@ -422,9 +422,6 @@ class MCTSAlphaParallel:
         self.args = args
         self.model = model
         self.player = player
-        self.corner_indices = [
-            5, 10, 55, 65, 110, 115,
-        ]  # Indices des coins du plateau
 
     @torch.no_grad()
     def search(self, states: np.ndarray, spGames: list) -> None:
@@ -446,13 +443,6 @@ class MCTSAlphaParallel:
         ] * np.random.dirichlet(
             [self.args["dirichlet_alpha"]] * self.game.action_size, size=policy.shape[0]
         )
-
-        # Ajuster les probabilités pour favoriser les coups valides dans les coins
-        for i in range(policy.shape[0]):
-            valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
-            for idx in self.corner_indices:
-                if valid_moves[idx] == 1:  # Vérifier si l'emplacement est un coup valide
-                    policy[i, idx] *= self.args.get("corner_weight", 1.5)
 
         # Élargir chaque jeu parallèle avec les politiques ajustées
         for i, spg in enumerate(spGames):
@@ -488,7 +478,7 @@ class MCTSAlphaParallel:
                 idx for idx, spg in enumerate(spGames) if spg.node is not None
             ]
 
-            if expandable_spGames:
+            if len(expandable_spGames) > 0:
                 # Obtenir les états des noeuds extensibles
                 states = np.stack(
                     [spGames[idx].node.state for idx in expandable_spGames]
@@ -540,7 +530,7 @@ class AlphaZeroParallel:
         player = 1
         spGames = [SPG(self.game) for _ in range(self.args["num_parallel_games"])]
 
-        while spGames:
+        while len(spGames) > 0:
             # Obtenir les états actuels de tous les jeux en parallèle
             states = np.stack([spg.state for spg in spGames])
             # Changer la perspective des états pour le joueur actuel
