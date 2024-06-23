@@ -38,7 +38,7 @@ Les entrées de l'algorithme de recherche dans AlphaZero sont un état de platea
 
 L'arbre est construit de manière itérative. Chaque nœud de l'arbre contient un état de plateau et des informations sur les actions valides possibles dans cet état. En utilisant cette structure, AlphaZero peut améliorer continuellement ses décisions en combinant la recherche approfondie de MCTS avec les prédictions fournies par le réseau de neurones, ce qui conduit à une politique de jeu optimisée pour chaque situation rencontrée.
 
-![State](.img/mcts.png)*
+![State](img/mcts.png)*
 
 ### Sélection
 
@@ -57,10 +57,10 @@ Si vous voulez plus d'information sur la règle PUCT, je vous invite à lire sui
 
 mais voici une petite image de la formule expliquant la règle PUCT et l'exploration
 
-![PUCT](.img/puct.png)*
+![PUCT](img/puct.png)*
 
 
-![Exploration](.img/exploration_puct.png)*
+![Exploration](img/exploration_puct.png)*
 
 Pour bien comprendre comment fonctionne la règle PUCT d'AlphaZero, prenons un exemple concret. Disons que notre réseau neuronal, après avoir été entraîné, nous dit avec une probabilité de 0,3 qu'il faut jouer une action particulière, appelons-la "a". On intègre cette probabilité de 0,3 dans la partie exploration de notre règle PUCT.
 
