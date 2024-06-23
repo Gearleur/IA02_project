@@ -13,15 +13,27 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+# Définition du bloc résiduel
 class ResBlock(nn.Module):
-    def __init__(self, num_hidden):
+    def __init__(self, num_hidden: int):
+        """
+        Initialise un bloc résiduel avec deux couches de convolution et de normalisation de lot.
+
+        :param num_hidden: Nombre de canaux de sortie pour les convolutions et la normalisation.
+        """
         super().__init__()
         self.conv1 = nn.Conv2d(num_hidden, num_hidden, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm2d(num_hidden)
         self.conv2 = nn.Conv2d(num_hidden, num_hidden, kernel_size=3, padding=1)
         self.bn2 = nn.BatchNorm2d(num_hidden)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Effectue une passe avant sur le bloc résiduel.
+
+        :param x: Entrée du bloc résiduel.
+        :return: Sortie du bloc résiduel après l'application de deux convolutions, normalisations et ReLU.
+        """
         residual = x
         x = F.relu(self.bn1(self.conv1(x)))
         x = self.bn2(self.conv2(x))
@@ -29,13 +41,21 @@ class ResBlock(nn.Module):
         x = F.relu(x)
         return x
 
-
+# Définition du réseau de neurones résiduel
 class ResNet(nn.Module):
-    def __init__(self, game, num_resBlocks, num_hidden, device):
+    def __init__(self, game, num_resBlocks: int, num_hidden: int, device: torch.device):
+        """
+        Initialise le réseau de neurones résiduel.
+
+        :param game: Instance du jeu pour lequel le réseau est utilisé.
+        :param num_resBlocks: Nombre de blocs résiduels.
+        :param num_hidden: Nombre de canaux de sortie pour les convolutions.
+        :param device: Appareil sur lequel exécuter le modèle (CPU ou GPU).
+        """
         super().__init__()
 
         self.device = device
-        game.size  # Taille du plateau
+        self.board_size = game.size  # Taille du plateau de jeu
 
         self.startBlock = nn.Sequential(
             nn.Conv2d(3, num_hidden, kernel_size=3, padding=1),
@@ -66,7 +86,13 @@ class ResNet(nn.Module):
 
         self.to(device)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Effectue une passe avant sur le réseau de neurones résiduel.
+
+        :param x: Entrée du réseau (image de l'état du jeu).
+        :return: Tuple contenant les sorties des têtes de politique et de valeur.
+        """
         x = self.startBlock(x)
         for resBlock in self.backBone:
             x = resBlock(x)
@@ -74,11 +100,20 @@ class ResNet(nn.Module):
         value = self.valueHead(x)
         return policy, value
 
-
+# Définition de la classe de noeud pour l'algorithme MCTS Alpha
 class NodeAlpha:
-    def __init__(
-        self, game, args, state, parent=None, action_taken=None, prior=0, visite_count=0
-    ):
+    def __init__(self, game, args: dict, state, parent=None, action_taken=None, prior: float = 0, visit_count: int = 0):
+        """
+        Initialise un noeud pour l'algorithme de recherche Monte Carlo Tree Search (MCTS).
+
+        :param game: Instance du jeu pour lequel le noeud est utilisé.
+        :param args: Dictionnaire des arguments de configuration.
+        :param state: État du jeu représenté par ce noeud.
+        :param parent: Noeud parent dans l'arbre de recherche.
+        :param action_taken: Action prise pour atteindre cet état.
+        :param prior: Probabilité a priori de choisir ce noeud.
+        :param visit_count: Nombre de visites de ce noeud.
+        """
         self.game = game
         self.args = args
         self.state = state
@@ -87,14 +122,23 @@ class NodeAlpha:
         self.prior = prior
 
         self.children = []
-
-        self.visit_count = visite_count
+        self.visit_count = visit_count
         self.value_sum = 0
 
-    def is_fully_expanded(self):
+    def is_fully_expanded(self) -> bool:
+        """
+        Vérifie si le noeud a été complètement étendu.
+
+        :return: True si le noeud a des enfants, sinon False.
+        """
         return len(self.children) > 0
 
-    def select(self):
+    def select(self) -> 'NodeAlpha':
+        """
+        Sélectionne le meilleur enfant basé sur la valeur UCB (Upper Confidence Bound).
+
+        :return: Le meilleur noeud enfant.
+        """
         best_child = None
         best_ucb = -np.inf
 
@@ -106,7 +150,13 @@ class NodeAlpha:
 
         return best_child
 
-    def get_ucb(self, child):
+    def get_ucb(self, child: 'NodeAlpha') -> float:
+        """
+        Calcule la valeur UCB pour un enfant donné.
+
+        :param child: Noeud enfant pour lequel calculer l'UCB.
+        :return: Valeur UCB du noeud enfant.
+        """
         if child.visit_count == 0:
             q_value = 0
         else:
@@ -118,7 +168,13 @@ class NodeAlpha:
             * child.prior
         )
 
-    def expand(self, policy):
+    def expand(self, policy: np.ndarray) -> 'NodeAlpha':
+        """
+        Étend le noeud en ajoutant des enfants pour chaque action possible basée sur la politique.
+
+        :param policy: Politique fournissant les probabilités pour chaque action.
+        :return: Le dernier enfant ajouté.
+        """
         for action, prob in enumerate(policy):
             if prob > 0:
                 child_state = self.state.copy()
@@ -134,7 +190,12 @@ class NodeAlpha:
 
         return child
 
-    def backpropagate(self, value):
+    def backpropagate(self, value: float):
+        """
+        Propagation en arrière des valeurs de retour pour mettre à jour les valeurs et le compte de visites.
+
+        :param value: Valeur de retour à propager.
+        """
         self.value_sum += value
         self.visit_count += 1
 
@@ -144,40 +205,61 @@ class NodeAlpha:
 
 
 class MCTSAlpha:
-    def __init__(self, game, args, model):
+    def __init__(self, game, args: dict, model: torch.nn.Module) -> None:
+        """
+        Initialise l'instance de MCTSAlpha.
+
+        :param game: L'instance du jeu.
+        :param args: Les arguments pour MCTS.
+        :param model: Le modèle de réseau de neurones.
+        """
         self.game = game
         self.args = args
         self.model = model
 
     @torch.no_grad()
-    def search(self, state):
+    def search(self, state) -> np.ndarray:
+        """
+        Effectue une recherche Monte Carlo Tree Search sur l'état donné.
+
+        :param state: L'état initial du jeu.
+        :return: Les probabilités des actions à prendre.
+        """
         root = NodeAlpha(self.game, self.args, state, visite_count=1)
 
+        # Obtenez la politique initiale du modèle
         policy, _ = self.model(
             torch.tensor(
                 self.game.get_encoded_state(state, 1), device=self.model.device
             ).unsqueeze(0)
         )
         policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
+
+        # Ajouter du bruit de Dirichlet pour exploration
         policy = (1 - self.args["dirichlet_epsilon"]) * policy + self.args[
             "dirichlet_epsilon"
         ] * np.random.dirichlet([self.args["dirichlet_alpha"]] * self.game.action_size)
 
+        # Filtrer les mouvements invalides
         valid_moves = self.game.get_valid_moves_encoded(state, 1)
         policy *= valid_moves
         policy /= np.sum(policy)
         root.expand(policy)
 
+        # Recherche
         for _ in range(self.args["num_searches"]):
             node = root
 
+            # Descente dans l'arbre
             while node.is_fully_expanded():
                 node = node.select()
 
+            # Obtenez la valeur et l'état terminal du noeud
             value, is_terminal = self.game.get_value_and_terminated(node.state, -1)
             value = self.game.get_opponent_value(value)
 
             if not is_terminal:
+                # Obtenez la politique et la valeur du modèle
                 policy, value = self.model(
                     torch.tensor(
                         self.game.get_encoded_state(node.state, 1),
@@ -186,16 +268,17 @@ class MCTSAlpha:
                 )
                 policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
 
+                # Filtrer les mouvements invalides
                 valid_moves = self.game.get_valid_moves_encoded(node.state, 1)
                 policy *= valid_moves
                 policy /= np.sum(policy)
 
                 value = value.item()
-
                 node.expand(policy)
 
             node.backpropagate(value)
 
+        # Calculer les probabilités d'actions finales
         action_probs = np.zeros(self.game.action_size)
         for child in root.children:
             action_probs[child.action_taken] = child.visit_count
@@ -204,14 +287,27 @@ class MCTSAlpha:
 
 
 class AlphaZero:
-    def __init__(self, model, optimizer, game, args):
+    def __init__(self, model: torch.nn.Module, optimizer: torch.optim.Optimizer, game, args: dict) -> None:
+        """
+        Initialise l'instance de AlphaZero.
+
+        :param model: Le modèle de réseau de neurones.
+        :param optimizer: L'optimiseur pour entraîner le modèle.
+        :param game: L'instance du jeu.
+        :param args: Les arguments pour AlphaZero.
+        """
         self.model = model
         self.optimizer = optimizer
         self.game = game
         self.args = args
         self.mcts = MCTSAlpha(game, args, model)
 
-    def selfPlay(self):
+    def selfPlay(self) -> list:
+        """
+        Effectue une partie contre soi-même pour générer des données d'entraînement.
+
+        :return: La mémoire contenant les états, les probabilités d'actions et les résultats.
+        """
         memory = []
         player = 1
         state = self.game.get_initial_state()
@@ -248,7 +344,12 @@ class AlphaZero:
 
             player = self.game.get_opponent(player)
 
-    def train(self, memory):
+    def train(self, memory: list) -> None:
+        """
+        Entraîne le modèle avec les données de la mémoire.
+
+        :param memory: La mémoire contenant les états, les probabilités d'actions et les résultats.
+        """
         random.shuffle(memory)
         for batchIdx in range(0, len(memory), self.args["batch_size"]):
             sample = memory[
@@ -270,61 +371,78 @@ class AlphaZero:
                 value_targets, dtype=torch.float32, device=self.model.device
             )
 
-    def learn(self):
+            out_policy, out_value = self.model(state)
+            
+            policy_loss = F.cross_entropy(out_policy, policy_targets)
+            value_loss = F.mse_loss(out_value, value_targets)
+            loss = policy_loss + value_loss
+            
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+    def learn(self) -> None:
+        """
+        Entraîne le modèle sur plusieurs itérations en utilisant self-play et des mises à jour de poids.
+
+        :param iterations: Nombre d'itérations pour l'entraînement.
+        """
         for iteration in range(self.args["num_iterations"]):
             memory = []
 
             self.model.eval()
-            for selfPlay_iteration in trange(
+            for _ in trange(
                 self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]
             ):
                 memory += self.selfPlay()
 
             self.model.train()
-            for epoch in trange(self.args["num_epochs"]):
+            for _ in trange(self.args["num_epochs"]):
                 self.train(memory)
 
+            # Save model and optimizer states
             torch.save(self.model.state_dict(), f"model_{iteration}_{self.game}.pt")
-            torch.save(
-                self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt"
-            )
-
+            torch.save(self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt")
 
 class MCTSAlphaParallel:
     def __init__(self, game, args, model, player=1):
+        """
+        Initialisation de la classe MCTSAlphaParallel.
+
+        :param game: Instance du jeu.
+        :param args: Arguments pour la configuration.
+        :param model: Modèle de réseau de neurones utilisé.
+        :param player: Joueur courant (1 par défaut).
+        """
         self.game = game
         self.args = args
         self.model = model
         self.player = player
         self.corner_indices = [
-            5,
-            10,
-            55,
-            65,
-            110,
-            115,
-        ]  # Indices des coins du plateau mis en dure pour éviter de les calculer à chaque fois
+            5, 10, 55, 65, 110, 115,
+        ]  # Indices des coins du plateau
 
     @torch.no_grad()
-    def search(self, states, spGames):
+    def search(self, states: np.ndarray, spGames: list) -> None:
+        """
+        Effectue une recherche MCTS pour les états donnés.
+
+        :param states: États actuels du jeu.
+        :param spGames: Liste des jeux en parallèle.
+        """
         policy, _ = self.model(
-            torch.tensor(
-                self.game.get_encoded_states(states, 1), device=self.model.device
-            )
+            torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
         )
         policy = torch.softmax(policy, axis=1).cpu().numpy()
-        policy = (1 - self.args["dirichlet_epsilon"]) * policy + self.args[
-            "dirichlet_epsilon"
-        ] * np.random.dirichlet(
-            [self.args["dirichlet_alpha"]] * self.game.action_size, size=policy.shape[0]
-        )
+        policy = (1 - self.args["dirichlet_epsilon"]) * policy + \
+                 self.args["dirichlet_epsilon"] * np.random.dirichlet(
+                     [self.args["dirichlet_alpha"]] * self.game.action_size, size=policy.shape[0]
+                 )
 
         for i in range(policy.shape[0]):
             valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
             for idx in self.corner_indices:
-                if (
-                    valid_moves[idx] == 1
-                ):  # Vérifier si l'emplacement est un coup valide
+                if valid_moves[idx] == 1:  # Vérifier si l'emplacement est un coup valide
                     policy[i, idx] *= self.args.get("corner_weight", 1.5)
 
         for i, spg in enumerate(spGames):
@@ -336,7 +454,7 @@ class MCTSAlphaParallel:
             spg.root = NodeAlpha(self.game, self.args, states[i], visite_count=1)
             spg.root.expand(spg_policy)
 
-        for search in range(self.args["num_searches"]):
+        for _ in range(self.args["num_searches"]):
             for spg in spGames:
                 spg.node = None
                 node = spg.root
@@ -352,31 +470,19 @@ class MCTSAlphaParallel:
                 else:
                     spg.node = node
 
-            expandable_spGames = [
-                mappingIdx
-                for mappingIdx in range(len(spGames))
-                if spGames[mappingIdx].node is not None
-            ]
+            expandable_spGames = [idx for idx, spg in enumerate(spGames) if spg.node is not None]
 
-            if len(expandable_spGames) > 0:
-                states = np.stack(
-                    [
-                        spGames[mappingIdx].node.state
-                        for mappingIdx in expandable_spGames
-                    ]
-                )
+            if expandable_spGames:
+                states = np.stack([spGames[idx].node.state for idx in expandable_spGames])
 
                 policy, value = self.model(
-                    torch.tensor(
-                        self.game.get_encoded_states(states, 1),
-                        device=self.model.device,
-                    )
+                    torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
                 )
-                policy = torch.softmax(policy, axis=1).squeeze(0).cpu().numpy()
+                policy = torch.softmax(policy, axis=1).cpu().numpy()
                 value = value.cpu().numpy()
 
-            for i, mappingIdx in enumerate(expandable_spGames):
-                node = spGames[mappingIdx].node
+            for i, idx in enumerate(expandable_spGames):
+                node = spGames[idx].node
                 spg_policy, spg_value = policy[i], value[i]
 
                 valid_moves = self.game.get_valid_moves_encoded(node.state, 1)
@@ -388,21 +494,33 @@ class MCTSAlphaParallel:
 
 
 class AlphaZeroParallel:
-    def __init__(self, model, optimizer, game, args):
+    def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, game, args: dict):
+        """
+        Initialisation de la classe AlphaZeroParallel.
+
+        :param model: Modèle de réseau de neurones utilisé.
+        :param optimizer: Optimiseur pour le modèle.
+        :param game: Instance du jeu.
+        :param args: Arguments pour la configuration.
+        """
         self.model = model
         self.optimizer = optimizer
         self.game = game
         self.args = args
         self.mcts = MCTSAlphaParallel(game, args, model)
 
-    def selfPlay(self):
+    def selfPlay(self) -> list:
+        """
+        Effectue une session de self-play en parallele.
+
+        :return: Mémoire des états joués.
+        """
         return_memory = []
         player = 1
-        spGames = [SPG(self.game) for spg in range(self.args["num_parallel_games"])]
+        spGames = [SPG(self.game) for _ in range(self.args["num_parallel_games"])]
 
-        while len(spGames) > 0:
+        while spGames:
             states = np.stack([spg.state for spg in spGames])
-
             neutral_states = self.game.change_perspective(states, player)
             self.mcts.search(neutral_states, spGames)
 
@@ -417,38 +535,20 @@ class AlphaZeroParallel:
 
                 spg.memory.append((spg.root.state, action_probs, player))
 
-                temperature_action_probs = action_probs ** (
-                    1 / self.args["temperature"]
-                )
+                temperature_action_probs = action_probs ** (1 / self.args["temperature"])
                 temperature_action_probs /= np.sum(temperature_action_probs)
 
-                action = np.random.choice(
-                    self.game.action_size, p=temperature_action_probs
-                )
+                action = np.random.choice(self.game.action_size, p=temperature_action_probs)
 
                 spg.state = self.game.get_next_state_encoded(spg.state, action, player)
 
-                value, is_terminal = self.game.get_value_and_terminated(
-                    spg.state, player
-                )
+                value, is_terminal = self.game.get_value_and_terminated(spg.state, player)
 
                 if is_terminal:
-                    for (
-                        hist_neutral_state,
-                        hist_action_probs,
-                        hist_player,
-                    ) in spg.memory:
-                        hist_outcome = (
-                            value
-                            if hist_player == player
-                            else self.game.get_opponent_value(value)
-                        )
+                    for hist_neutral_state, hist_action_probs, hist_player in spg.memory:
+                        hist_outcome = value if hist_player == player else self.game.get_opponent_value(value)
                         return_memory.append(
-                            (
-                                self.game.get_encoded_state(hist_neutral_state, 1),
-                                hist_action_probs,
-                                hist_outcome,
-                            )
+                            (self.game.get_encoded_state(hist_neutral_state, 1), hist_action_probs, hist_outcome)
                         )
 
                     del spGames[i]
@@ -457,7 +557,12 @@ class AlphaZeroParallel:
 
         return return_memory
 
-    def train(self, memory):
+    def train(self, memory: list) -> None:
+        """
+        Entraîne le modèle avec la mémoire des états joués.
+
+        :param memory: Mémoire des états joués.
+        """
         random.shuffle(memory)
         for batchIdx in range(0, len(memory), self.args["batch_size"]):
             sample = memory[
@@ -478,25 +583,34 @@ class AlphaZeroParallel:
             value_targets = torch.tensor(
                 value_targets, dtype=torch.float32, device=self.model.device
             )
+            
+            out_policy, out_value = self.model(state)
+            
+            policy_loss = F.cross_entropy(out_policy, policy_targets)
+            value_loss = F.mse_loss(out_value, value_targets)
+            loss = policy_loss + value_loss
+            
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
 
-    def learn(self):
+    def learn(self) -> None:
+        """
+        Effectue le processus d'apprentissage complet sur plusieurs itérations.
+        """
         for iteration in range(self.args["num_iterations"]):
             memory = []
 
             self.model.eval()
-            for selfPlay_iteration in trange(
-                self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]
-            ):
+            for _ in trange(self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]):
                 memory += self.selfPlay()
 
             self.model.train()
-            for epoch in trange(self.args["num_epochs"]):
+            for _ in trange(self.args["num_epochs"]):
                 self.train(memory)
 
             torch.save(self.model.state_dict(), f"model_{iteration}_{self.game}.pt")
-            torch.save(
-                self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt"
-            )
+            torch.save(self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt")
 
 
 class SPG:
