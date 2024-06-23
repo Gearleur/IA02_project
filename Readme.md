@@ -144,3 +144,70 @@ Input
 -------------------------------------
 ```
 
+
+## Améliorations faites
+
+La première amélioration que j'ia pu faire pour l'entrainnement est de paralleliser l'entrainnement. En effet, l'entrainnement d'AlphaZero est très long et peut prendre plusieurs jours. Ainsi, j'ai décidé de paralléliser l'entrainnement en utilisant plusieurs processus pour entrainer le réseau de neurone. On retrouve ca dans AlphaZeroParallele et MCTSParallele. Cela permet de gagner un temps considérable. Il a fallut egalement traiter des listes de listes d'états encodés ce qui ne fut pas une mince affaire au début.
+
+## Résultats
+
+Sur mon ordinateur je n'ai pu entrainner mon model uniquement sur 40 parties ce qui est clairement insuffisant pour avoir un model performant. Dans le fichier visualisation, vous pourrez voir les résultats de l'entrainnement des model si vous décidé d'ssayer de les entrainer. 
+Dans visualisation, vous pourrez voir les résultats de l'entrainnement des model si vous décidé d'essayer de les entrainer. 
+
+Je pense qu'il faut compter environ 3000 parties pour avoir un model performant. Donc il faut clairement améliorer le code pour l'optimiser en particulier pour la mdoélisation du jeu.
+
+
+## Amélioration possible
+Je n'ai utiliser qu'au début un tableau pour voir les pions placé. Mais prendre un state muni d'une grid et d'un dictionnaire n'est clairmeent pas une mauvaise idée et donc il faudrait revoir la modélisation du jeu pour l'optimiser.
+
+Une autre idée que je n'ai pas eu le temsp de faire est de considérer uniquement un état de jeu et par une rotation de 60 degrés, on retrouve facilement les autres états de jeu. Cela permettrait de réduire le nombre d'état de jeu et donc de réduire le temps d'entrainnement. Une des Amélioration les plus importante que je n'ai malheureusement pas eu le temps de faire. (c'est, j'imagine,  ceux sur quoi vous nous attendiez evidement...)
+
+Enfin, comme vous avez à disposition des IA des jeux plutot très performante, une bonne idée serait de commencer l'entrainnement du model avec ces IA pour qu'elle atteigne plus rapidement un niveau de jeu correcte. Je pense que l'entrainnement de l'IA sera extremement plus rapide au début.
+
+
+## Conclusion
+
+Ce projet clairement j'ai adoré le faire, j'ai appris enormement de chose. Mon seul regret est de ne pas avoir pu le finir correctement. Il y a énormement de chose que j'aurai voulu faire et c'etait surement trop ambitieux pour notre groupe. Je ne me suis peut être pas assez rapproché de professeur pour m'aider au bon déroulement de ce projet. Mais je suis très content de ce que j'ai pu faire et j'espère que vous avez apprécié ce projet autant que moi.
+
+
+## utilisations
+
+### Attention Important 
+avant d'installer les requierements, il faut installer pytorch et cuda en fonction de votre machine. Pour cela, je vous invite à vous rendre sur le site de pytorch et de suivre les instructions pour installer pytorch en fonction de votre machine. voir [Pytorch](https://pytorch.org/get-started/locally/)
+
+### Installation des requierements
+```bash
+pip install -r requirements.txt
+```
+
+### Lancer l'entrainnement
+```bash
+python train_mcts.py
+```
+
+- "num_searches": nombre de recherche pour MCTS
+- "C": constante pour la règle PUCT
+- "num_iterations": nombre d'itération pour l'entrainnement
+- "num_selfPlay_iterations": nombre de partie pour l'entrainnement
+- "num_parallel_games": nombre de partie en parallèle
+- "num_epochs": nombre d'epoch pour l'entrainnement
+- "batch_size": taille du batch : c'est le nombre de partie que l'on va jouer avant de faire un backpropagation
+- "temperature": temperature pour la distribution de probabilité
+- "dirichlet_epsilon": epsilon pour la distribution de dirichlet
+- "dirichlet_alpha": alpha pour la distribution de dirichlet
+
+Si vous voulez load un model pour continuer l'entrainnement, vous pouvez ajouter décommenter la ligne 17 et 18 et ajouter le chemin du model à load et de l'optimisateur.
+
+Enfin num_resBlocks et num_hidden sont les hyperparamètres du réseau de neurone. Ils servent à définir le nombre de block de résiduel et le nombre de neurone dans le réseau de neurone. Comme les jeux sont plutot simple, il n'est pas nécessaire d'avoir un réseau de neurone très complexe.
+
+### Lancer la visualisation
+```bash
+python visualisation.py
+```
+
+### Lancer un jeu
+```bash
+python main.py
+```
+
+

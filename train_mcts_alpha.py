@@ -14,6 +14,8 @@ model = ResNet(gopher, num_resBlocks=9, num_hidden=128, device=device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
 
+# model.load_state_dict(torch.load("model_1_GopherGame.pt", map_location=device))
+# optimizer.load_state_dict(torch.load("optimizer_1_GopherGame.pt", map_location=device))
 
 args = {
     "num_searches": 700,
