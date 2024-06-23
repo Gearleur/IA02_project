@@ -2,25 +2,25 @@
 
 ## Introduction
 
-Pour commencer ce titre un peu aguicheur, je vais vous raconter un projet d'IA02 qui m'a pris plus d'une nuit sans dormir pendant plusieurs semaines et qui fut un échec total.
+Pour commencer ce titre un peu aguicheur, nous allons vous raconter un projet d'IA02 qui nous a pris plus d'une nuit sans dormir pendant plusieurs semaines et qui fut un échec total.
 
-Le projet Gopher and Dodo est un projet pour l'UV d'IA02 dans lequel il fallait mettre en place une IA pour jouer aux jeux Dodo et Gopher que vous trouverez dans le dossier Règles. Ce sont des jeux extrêmement simples et très faciles à mettre en place. (Ce qui est en partie la cause de mon échec).
+Le projet Gopher and Dodo est un projet pour l'UV d'IA02 dans lequel il fallait mettre en place une IA pour jouer aux jeux Dodo et Gopher que vous trouverez dans le dossier Règles. Ce sont des jeux extrêmement simples et très faciles à mettre en place. (Ce qui est en partie la cause de notre échec).
 
 ## Modélisation des jeux
 
-Je vais passer le fait d'expliquer les règles du jeu mais je vais m'attarder sur deux modélisations des jeux. Dans chaque dossier de jeu, vous avez game et game_2. La première modélisation est la plus complexe car elle devait s'adapter pour pouvoir implémenter AlphaZero. Elle prend en compte un système de tableau pour gérer les états et un système qui permet d'encoder cet état pour pouvoir le passer dans un réseau de neurones. Les parties qui diffèrent d'une modélisation de base sont : get_encoded_state et next_state_encoded. La fonction get_encoded_state permet, en ayant un état de jeu donné, d'obtenir trois matrices de jeu avec : les coups adverses, les coups jouables et enfin les coups joués par le joueur. La fonction next_state_encoded permet de passer d'un état de jeu à un autre en donnant un coup à partir d'une matrice 1D de l'ensemble des coups jouables. Par la suite, cette modélisation nous simplifiera l'utilisation d'un modèle ResNet pour AlphaZero.
+Nous allons passer le fait d'expliquer les règles du jeu mais nous allons nous attarder sur deux modélisations des jeux. Dans chaque dossier de jeu, vous avez game et game_2. La première modélisation est la plus complexe car elle devait s'adapter pour pouvoir implémenter AlphaZero. Elle prend en compte un système de tableau pour gérer les états et un système qui permet d'encoder cet état pour pouvoir le passer dans un réseau de neurones. Les parties qui diffèrent d'une modélisation de base sont : get_encoded_state et next_state_encoded. La fonction get_encoded_state permet, en ayant un état de jeu donné, d'obtenir trois matrices de jeu avec : les coups adverses, les coups jouables et enfin les coups joués par le joueur. La fonction next_state_encoded permet de passer d'un état de jeu à un autre en donnant un coup à partir d'une matrice 1D de l'ensemble des coups jouables. Par la suite, cette modélisation nous simplifiera l'utilisation d'un modèle ResNet pour AlphaZero.
 
 La deuxième modélisation est beaucoup plus classique avec l'utilisation de dictionnaires pour gérer les états et les coups. Cela permet de simplifier l'implémentation de l'IA comme MinMax et simplifie grandement les calculs et la gestion des états.
 
 ## Première exploration
 
-Après avoir modélisé les jeux assez rapidement et fait une première version de l'IA, j'ai constaté que rapidement j'arrivais à faire une IA de MinMax. L'IA n'était pas très performante mais elle arrivait à jouer correctement, ce qui me satisfaisait.
+Après avoir modélisé les jeux assez rapidement et fait une première version de l'IA, nous avons constaté que rapidement nous arrivions à faire une IA de MinMax. L'IA n'était pas très performante mais elle arrivait à jouer correctement, ce qui nous satisfaisait.
 
-Ainsi, pour aller plus loin, j'ai décidé de m'atteler à une des dernières découvertes pour les jeux par Google, l'implémentation de AlphaZero. J'ai donc commencé à lire les articles de Google et à essayer de comprendre comment cela fonctionnait.
+Ainsi, pour aller plus loin, nous avons décidé de nous atteler à une des dernières découvertes pour les jeux par Google, l'implémentation de AlphaZero. Nous avons donc commencé à lire les articles de Google et à essayer de comprendre comment cela fonctionnait.
 
 ## AlphaZero
 
-Pour commencer, laissez-moi vous expliquer comment AlphaZero fusionne l'intuition et la raison pour créer une intelligence artificielle exceptionnelle. Il y a deux modes de pensée dans le raisonnement humain : un mode rapide basé sur l'intuition et un mode lent guidé par des règles explicites.
+Pour commencer, laissez-nous vous expliquer comment AlphaZero fusionne l'intuition et la raison pour créer une intelligence artificielle exceptionnelle. Il y a deux modes de pensée dans le raisonnement humain : un mode rapide basé sur l'intuition et un mode lent guidé par des règles explicites.
 
 Dans AlphaZero, le mode rapide est représenté par un réseau de neurones qui prend un état de jeu et produit une politique (une distribution de probabilité sur les actions) et une valeur (un score indiquant la qualité de cet état pour le joueur actuel). Le mode lent, quant à lui, est incarné par une recherche d'arbre de Monte Carlo (MCTS). Imaginez que nous réfléchissons à la prochaine action à prendre dans un jeu d'information parfaite comme le jeu de Réaction en chaîne.
 
@@ -48,7 +48,7 @@ AlphaZero utilise une règle appelée PUCT (Predictor Upper Confidence bounds ap
 
 La règle PUCT a été développée pour gérer les compromis entre exploration et exploitation dans les arbres de recherche. Elle utilise des prédictions pour guider la recherche, permettant à AlphaZero de naviguer efficacement dans l'espace de jeu.
 
-Si vous voulez plus d'informations sur la règle PUCT, je vous invite à lire l'article suivant : [PUCT](https://medium.com/@bentou.pub/alphazero-from-scratch-in-pytorch-for-the-game-of-chain-reaction-part-2-b2e7edda14fb)
+Si vous voulez plus d'informations sur la règle PUCT, nous vous invitons à lire l'article suivant : [PUCT](https://medium.com/@bentou.pub/alphazero-from-scratch-in-pytorch-for-the-game-of-chain-reaction-part-2-b2e7edda14fb)
 
 Mais voici une petite image de la formule expliquant la règle PUCT et l'exploration
 
@@ -103,7 +103,7 @@ Conv2d -> BatchNorm -> Conv2d -> BatchNorm
 ReLU                ReLU
 Flatten             Flatten
 Linear              Linear
-
+```
 
 ### Schéma global du réseau
 
@@ -159,26 +159,26 @@ Input
 
 ## Améliorations faites
 
-La première amélioration que j'ai pu faire pour l'entraînement est de paralléliser l'entraînement. En effet, l'entraînement d'AlphaZero est très long et peut prendre plusieurs jours. Ainsi, j'ai décidé de paralléliser l'entraînement en utilisant plusieurs processus pour entraîner le réseau de neurones. On retrouve ça dans AlphaZeroParallele et MCTSParallele. Cela permet de gagner un temps considérable. Il a fallu également traiter des listes de listes d'états encodés, ce qui ne fut pas une mince affaire au début.
+La première amélioration que nous avons pu faire pour l'entraînement est de paralléliser l'entraînement. En effet, l'entraînement d'AlphaZero est très long et peut prendre plusieurs jours. Ainsi, nous avons décidé de paralléliser l'entraînement en utilisant plusieurs processus pour entraîner le réseau de neurones. On retrouve ça dans AlphaZeroParallele et MCTSParallele. Cela permet de gagner un temps considérable. Il a fallu également traiter des listes de listes d'états encodés, ce qui ne fut pas une mince affaire au début.
 
 ## Résultats
 
-Sur mon ordinateur, je n'ai pu entraîner mon modèle uniquement sur 40 parties, ce qui est clairement insuffisant pour avoir un modèle performant. Dans le fichier visualisation, vous pourrez voir les résultats de l'entraînement des modèles si vous décidez d'essayer de les entraîner.
+Sur notre ordinateur, nous n'avons pu entraîner notre modèle uniquement sur 40 parties, ce qui est clairement insuffisant pour avoir un modèle performant. Dans le fichier visualisation, vous pourrez voir les résultats de l'entraînement des modèles si vous décidez d'essayer de les entraîner.
 
-Je pense qu'il faut compter environ 3000 parties pour avoir un modèle performant. Donc il faut clairement améliorer le code pour l'optimiser, en particulier pour la modélisation du jeu.
+Nous pensons qu'il faut compter environ 3000 parties pour avoir un modèle performant. Donc il faut clairement améliorer le code pour l'optimiser, en particulier pour la modélisation du jeu.
 
 
 ## Amélioration possible
-Je n'ai utilisé qu'au début un tableau pour voir les pions placés. Mais prendre un état muni d'une grille et d'un dictionnaire n'est clairement pas une mauvaise idée, et donc il faudrait revoir la modélisation du jeu pour l'optimiser.
+Nous n'avons utilisé qu'au début un tableau pour voir les pions placés. Mais prendre un état muni d'une grille et d'un dictionnaire n'est clairement pas une mauvaise idée, et donc il faudrait revoir la modélisation du jeu pour l'optimiser.
 
-Une autre idée que je n'ai pas eu le temps de faire est de considérer uniquement un état de jeu et par une rotation de 60 degrés, on retrouve facilement les autres états de jeu. Cela permettrait de réduire le nombre d'états de jeu et donc de réduire le temps d'entraînement. Une des améliorations les plus importantes que je n'ai malheureusement pas eu le temps de faire. (c'est, j'imagine, ce sur quoi vous nous attendiez évidemment...)
+Une autre idée que nous n'avons pas eu le temps de faire est de considérer uniquement un état de jeu et par une rotation de 60 degrés, on retrouve facilement les autres états de jeu. Cela permettrait de réduire le nombre d'états de jeu et donc de réduire le temps d'entraînement. Une des améliorations les plus importantes que nous n'avons malheureusement pas eu le temps de faire. (c'est, nous imaginons, ce sur quoi vous nous attendiez évidemment...)
 
-Enfin, comme vous avez à disposition des IA de jeux plutôt très performantes, une bonne idée serait de commencer l'entraînement du modèle avec ces IA pour qu'elle atteigne plus rapidement un niveau de jeu correct. Je pense que l'entraînement de l'IA sera extrêmement plus rapide au début.
+Enfin, comme vous avez à disposition des IA de jeux plutôt très performantes, une bonne idée serait de commencer l'entraînement du modèle avec ces IA pour qu'elle atteigne plus rapidement un niveau de jeu correct. Nous pensons que l'entraînement de l'IA sera extrêmement plus rapide au début.
 
 
 ## Conclusion
 
-Ce projet, clairement, j'ai adoré le faire, j'ai appris énormément de choses. Mon seul regret est de ne pas avoir pu le finir correctement. Il y a énormément de choses que j'aurais voulu faire et c'était sûrement trop ambitieux pour notre groupe. Je ne me suis peut-être pas assez rapproché des professeurs pour m'aider au bon déroulement de ce projet. Mais je suis très content de ce que j'ai pu faire et j'espère que vous avez apprécié ce projet autant que moi.
+Ce projet, clairement, nous avons adoré le faire, nous avons appris énormément de choses. Notre seul regret est de ne pas avoir pu le finir correctement. Il y a énormément de choses que nous aurions voulu faire et c'était sûrement trop ambitieux pour notre groupe. Nous ne nous sommes peut-être pas assez rapprochés des professeurs pour nous aider au bon déroulement de ce projet. Mais nous sommes très contents de ce que nous avons pu faire et nous espérons que vous avez apprécié ce projet autant que nous.
 
 Le projet était très intéressant. La liberté du sujet m'a permis d'explorer et de découvrir divers algorithmes, même si je n'ai pas réussi à les faire tous marcher. Ces difficultés ont pû être surmontées grâce aux capacités de mon binôme. Me concentrer sur des tâches et algorithmes plus simples m'a permis de progresser et de faire progresser le projet. Cette expérience était enrichissante et formatrice.
 
