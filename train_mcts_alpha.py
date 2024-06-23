@@ -10,12 +10,9 @@ gopher = GopherGame(board_size=6)
 
 device = torch.device("cuda")
 
-model = ResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
+model = ResNet(gopher, num_resBlocks=9, num_hidden=128, device=device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
-
-model.load_state_dict(torch.load("model_0_GopherGame.pt", map_location=device))
-optimizer.load_state_dict(torch.load("optimizer_0_GopherGame.pt", map_location=device))
 
 
 args = {
@@ -25,7 +22,7 @@ args = {
     "num_selfPlay_iterations": 160,
     "num_parallel_games": 40,
     "num_epochs": 4,
-    "batch_size": 32,
+    "batch_size": 64,
     "temperature": 1.25,
     "dirichlet_epsilon": 0.25,
     "dirichlet_alpha": 0.3,

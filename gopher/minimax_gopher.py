@@ -1,17 +1,18 @@
 import numpy as np
 from copy import deepcopy
-
+from .hex import Hex
 
 def state_to_hashable(state):
     return tuple(
         sorted((hex.q, hex.r, hex.s, occupant) for hex, occupant in state.items())
     )
 
-
-
 def minimax_gopher(
     game, state, depth, alpha, beta, maximizingPlayer, player, memo=None
 ):
+    if not state:
+        return 0, Hex(0, -5, 5)
+    
     if memo is None:
         memo = {}
 

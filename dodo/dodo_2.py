@@ -100,8 +100,36 @@ class DodoGame2:
         return 1000
         
         
-    def evaluate_state(state, player):
+    def evaluate_state(self, state, player):
         if player == 1:
             return -np.sum(state == -1)
         else:
             return np.sum(state == 1)
+        
+        
+    def server_state_to_dodo(
+        self, server_state: List[Tuple[Tuple[int, int], int]]
+    ) -> List[List[int]]:
+        # Taille du tableau
+        array_size = 2 * self.size + 1
+        state = {}
+        # Utiliser cell_to_grid pour convertir et remplir le tableau
+        for cell, value in server_state:
+            q = cell[0]
+            r = cell[1]
+            s = -q + r
+            if value == 1:
+                state[Hex(q, -r, s)] = 1
+            elif value == 2:
+                state[Hex(q, -r, s)] = -1
+            else:
+                state[Hex(q, -r, s)] = 0
+        return state
+            
+            
+    def action_to_server(self, action):
+        print(action)
+        start, end = action
+        return (start.q, -start.r), (end.q, -end.r)
+                
+        

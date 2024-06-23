@@ -6,7 +6,7 @@ from .hex import (
     hex_subtract,
     idx_to_hex,
 )
-from .game_logic import GopherGame
+from .gopher import GopherGame
 from .gopher_2 import GopherGame2
 from .minimax_gopher import minimax_gopher
 from .mcts_alpha import (
@@ -19,3 +19,5 @@ from .mcts_alpha import (
     MCTSAlphaParallel,
     MockResNet,
 )
+
+from .gopher_numba import *
