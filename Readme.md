@@ -180,6 +180,7 @@ Enfin, comme vous avez à disposition des IA de jeux plutôt très performantes,
 
 Ce projet, clairement, j'ai adoré le faire, j'ai appris énormément de choses. Mon seul regret est de ne pas avoir pu le finir correctement. Il y a énormément de choses que j'aurais voulu faire et c'était sûrement trop ambitieux pour notre groupe. Je ne me suis peut-être pas assez rapproché des professeurs pour m'aider au bon déroulement de ce projet. Mais je suis très content de ce que j'ai pu faire et j'espère que vous avez apprécié ce projet autant que moi.
 
+Le projet était très intéressant. La liberté du sujet m'a permis d'explorer et de découvrir divers algorithmes, même si je n'ai pas réussi à les faire tous marcher. Ces difficultés ont pû être surmontées grâce aux capacités de mon binôme. Me concentrer sur des tâches et algorithmes plus simples m'a permis de progresser et de faire progresser le projet. Cette expérience était enrichissante et formatrice.
 
 ## utilisations
 
