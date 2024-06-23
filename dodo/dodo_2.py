@@ -30,20 +30,42 @@ class DodoGame2:
                     state[Hex(q, r, s)] = 0
 
         # Position des pions B (-1)
-        positions_B = [(0, -3), (1, -3), (2, -3), (3, -3),
-                       (0, -2), (1, -2), (2, -2), (3, -2),
-                       (1, -1), (2, -1), (3, -1),
-                       (2, 0), (3, 0)]
+        positions_B = [
+            (0, -3),
+            (1, -3),
+            (2, -3),
+            (3, -3),
+            (0, -2),
+            (1, -2),
+            (2, -2),
+            (3, -2),
+            (1, -1),
+            (2, -1),
+            (3, -1),
+            (2, 0),
+            (3, 0),
+        ]
         for pos in positions_B:
-            state[Hex(pos[0], pos[1], -pos[0]-pos[1])] = -1
+            state[Hex(pos[0], pos[1], -pos[0] - pos[1])] = -1
 
         # Position des pions R (1)
-        positions_R = [(0, 3), (-1, 3), (-2, 3), (-3, 3),
-                       (0, 2), (-1, 2), (-2, 2), (-3, 2),
-                       (-1, 1), (-2, 1), (-3, 1),
-                       (-2, 0), (-3, 0)]
+        positions_R = [
+            (0, 3),
+            (-1, 3),
+            (-2, 3),
+            (-3, 3),
+            (0, 2),
+            (-1, 2),
+            (-2, 2),
+            (-3, 2),
+            (-1, 1),
+            (-2, 1),
+            (-3, 1),
+            (-2, 0),
+            (-3, 0),
+        ]
         for pos in positions_R:
-            state[Hex(pos[0], pos[1], -pos[0]-pos[1])] = 1
+            state[Hex(pos[0], pos[1], -pos[0] - pos[1])] = 1
 
         return state
 
@@ -82,7 +104,7 @@ class DodoGame2:
     def is_terminal_state(self, state, player):
         return len(self.get_valid_moves(state, player)) == 0
 
-    #affichage du plateau de jeu
+    # affichage du plateau de jeu
     def display(self, state):
         board_size = self.size
         for r in range(-board_size, board_size + 1):
@@ -90,7 +112,11 @@ class DodoGame2:
             print(" " * indent, end="")
             for q in range(-board_size, board_size + 1):
                 s = -q - r
-                if abs(q) <= board_size and abs(r) <= board_size and abs(s) <= board_size:
+                if (
+                    abs(q) <= board_size
+                    and abs(r) <= board_size
+                    and abs(s) <= board_size
+                ):
                     hex = Hex(q, r, s)
                     if hex in state:
                         val = state[hex]
@@ -101,12 +127,10 @@ class DodoGame2:
                         else:
                             print(".", end=" ")
             print()
-            
-    
+
     def evaluate_state_terminal(self, state, player):
         return 1000
-        
-        
+
     def evaluate_state(self, state, player):
         if player == 1:
             return -np.sum(state == -1)
@@ -138,5 +162,3 @@ class DodoGame2:
         print(action)
         start, end = action
         return (start.q, -start.r), (end.q, -end.r)
-                
-        

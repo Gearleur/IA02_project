@@ -11,7 +11,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Initialiser le jeu
 gopher = GopherGame(board_size=6)
 
-board_size = 2*gopher.size +1
+board_size = 2 * gopher.size + 1
 
 state = gopher.get_initial_state()
 state = gopher.get_next_state(state, (0, -4, 4), 1)
@@ -47,16 +47,16 @@ dz = policy_grid.flatten()
 
 # Création de la figure et de l'axe 3D
 fig = plt.figure(figsize=(10, 7))
-ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111, projection="3d")
 
 # Création des barres en 3D
 ax.bar3d(x, y, z, dx, dy, dz, shade=True)
 
 # Ajout des étiquettes et du titre
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Policy Value')
-ax.set_title('3D Bar Plot of Game Board Policies')
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_zlabel("Policy Value")
+ax.set_title("3D Bar Plot of Game Board Policies")
 
 # Affichage du graphique
 plt.show()

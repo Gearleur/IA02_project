@@ -34,7 +34,11 @@ class GopherGame2:
             player = self.get_current_player(state)
 
         # Vérifiez si le mouvement est à l'intérieur des limites de l'hexagone
-        if abs(action.q) > self.size or abs(action.r) > self.size or abs(action.s) > self.size:
+        if (
+            abs(action.q) > self.size
+            or abs(action.r) > self.size
+            or abs(action.s) > self.size
+        ):
             return False
 
         # Vérifiez si la cellule est déjà occupée
@@ -76,7 +80,6 @@ class GopherGame2:
                             valid_moves.append(action)
         return valid_moves
 
-
     def display(self, state):
         for r in range(-self.size, self.size + 1):
             indent = abs(r)
@@ -106,10 +109,10 @@ class GopherGame2:
             elif val == -player:
                 score -= 1
         return score
-    
+
     def evaluate_state_terminal(self, state, player):
         return -1000
-    
+
     def serveur_state_to_gopher(
         self, server_state: List[Tuple[Tuple[int, int], int]]
     ) -> List[List[int]]:
@@ -123,7 +126,6 @@ class GopherGame2:
             elif value == 2:
                 state[Hex(q, -r, s)] = -1
         return state
-    
+
     def action_to_server(self, action):
         return (action.q, -action.r)
-            

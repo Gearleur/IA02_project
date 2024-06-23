@@ -19,4 +19,3 @@ from .mcts_alpha import (
     MCTSAlphaParallel,
     MockResNet,
 )
-

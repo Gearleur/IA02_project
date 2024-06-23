@@ -45,7 +45,11 @@ class GopherGame:
             player = self.get_current_player(state)
 
         # Vérifiez si le mouvement est à l'intérieur des limites de l'hexagone
-        if abs(action.q) > self.size or abs(action.r) > self.size or abs(action.s) > self.size:
+        if (
+            abs(action.q) > self.size
+            or abs(action.r) > self.size
+            or abs(action.s) > self.size
+        ):
             return False
 
         # Vérifiez si la cellule est déjà occupée
@@ -58,7 +62,11 @@ class GopherGame:
 
         for direction in range(6):
             neighbor = hex_neighbor(action, direction)
-            if abs(neighbor.q) <= self.size and abs(neighbor.r) <= self.size and abs(neighbor.s) <= self.size:
+            if (
+                abs(neighbor.q) <= self.size
+                and abs(neighbor.r) <= self.size
+                and abs(neighbor.s) <= self.size
+            ):
                 nx, ny = hex_to_idx(neighbor, self.size)
                 if state[nx][ny] == player:
                     has_friendly_connection = True

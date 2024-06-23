@@ -6,7 +6,8 @@ def state_to_hashable(state):
         sorted((hex.q, hex.r, hex.s, occupant) for hex, occupant in state.items())
     )
 
-#algorithme minmax avec élagage alpha-beta et mmemorisation.
+
+# algorithme minmax avec élagage alpha-beta et mmemorisation.
 def minimax_dodo(game, state, depth, alpha, beta, maximizingPlayer, player, memo=None):
     if memo is None:
         memo = {}

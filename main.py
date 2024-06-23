@@ -65,7 +65,6 @@ def main_alpha_gopher():
         player = -player
 
 
-
 def main_dodo():
     game = DodoGame2()
     state = game.init_board()
@@ -110,9 +109,9 @@ def main_gopher_classique():
     turns = 0
     while True:
         game.display(state)
-        
+
         if game.is_terminal_state(state, current_player):
-            
+
             break
 
         if current_player == 1:
