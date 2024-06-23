@@ -1,24 +1,24 @@
 # Le projet Gopher and Dodo ou le plus gros flop de l'Histoire
 
-## Introduction
+## Introduction 📃
 
 Pour commencer ce titre un peu aguicheur, nous allons vous raconter un projet d'IA02 qui nous a pris plus d'une nuit sans dormir pendant plusieurs semaines et qui fut un échec total.
 
 Le projet Gopher and Dodo est un projet pour l'UV d'IA02 dans lequel il fallait mettre en place une IA pour jouer aux jeux Dodo et Gopher que vous trouverez dans le dossier Règles. Ce sont des jeux extrêmement simples et très faciles à mettre en place. (Ce qui est en partie la cause de notre échec).
 
-## Modélisation des jeux
+## Modélisation des jeux ♟️
 
 Nous allons passer le fait d'expliquer les règles du jeu mais nous allons nous attarder sur deux modélisations des jeux. Dans chaque dossier de jeu, vous avez game et game_2. La première modélisation est la plus complexe car elle devait s'adapter pour pouvoir implémenter AlphaZero. Elle prend en compte un système de tableau pour gérer les états et un système qui permet d'encoder cet état pour pouvoir le passer dans un réseau de neurones. Les parties qui diffèrent d'une modélisation de base sont : get_encoded_state et next_state_encoded. La fonction get_encoded_state permet, en ayant un état de jeu donné, d'obtenir trois matrices de jeu avec : les coups adverses, les coups jouables et enfin les coups joués par le joueur. La fonction next_state_encoded permet de passer d'un état de jeu à un autre en donnant un coup à partir d'une matrice 1D de l'ensemble des coups jouables. Par la suite, cette modélisation nous simplifiera l'utilisation d'un modèle ResNet pour AlphaZero.
 
 La deuxième modélisation est beaucoup plus classique avec l'utilisation de dictionnaires pour gérer les états et les coups. Cela permet de simplifier l'implémentation de l'IA comme MinMax et simplifie grandement les calculs et la gestion des états.
 
-## Première exploration
+## Première exploration 🤖
 
 Après avoir modélisé les jeux assez rapidement et fait une première version de l'IA, nous avons constaté que rapidement nous arrivions à faire une IA de MinMax. L'IA n'était pas très performante mais elle arrivait à jouer correctement, ce qui nous satisfaisait.
 
 Ainsi, pour aller plus loin, nous avons décidé de nous atteler à une des dernières découvertes pour les jeux par Google, l'implémentation de AlphaZero. Nous avons donc commencé à lire les articles de Google et à essayer de comprendre comment cela fonctionnait.
 
-## AlphaZero
+## AlphaZero 👾
 
 Pour commencer, laissez-nous vous expliquer comment AlphaZero fusionne l'intuition et la raison pour créer une intelligence artificielle exceptionnelle. Il y a deux modes de pensée dans le raisonnement humain : un mode rapide basé sur l'intuition et un mode lent guidé par des règles explicites.
 
@@ -26,7 +26,7 @@ Dans AlphaZero, le mode rapide est représenté par un réseau de neurones qui p
 
 Nous pourrions avoir une intuition sur les meilleures actions à prendre. Cette intuition initiale peut être exprimée sous forme de distribution de probabilité sur les actions, attribuant une probabilité plus élevée aux bonnes actions et plus faible aux mauvaises. Cette distribution est notre "politique" pour cet état donné. Pour améliorer cette politique initiale, nous pouvons envisager les mouvements futurs possibles, en utilisant notre intuition pour évaluer les états intermédiaires et éviter de passer trop de temps sur des nœuds à faible valeur. Après cette recherche d'arbre, nous aurons une meilleure idée des actions à entreprendre, obtenant ainsi une politique améliorée. Ce processus est appelé "amplification" et il est réalisé par MCTS dans AlphaZero. Ensuite, nous utilisons cette politique améliorée pour optimiser notre réseau de neurones, en minimisant la perte d'entropie croisée entre la politique améliorée et la politique initiale, ainsi qu'une autre perte entre les prédictions de valeur du réseau de neurones et la valeur réelle obtenue à la fin d'une partie. En combinant ces deux processus, AlphaZero parvient à développer des agents experts capables de jouer à des jeux de manière très efficace.
 
-## MCTS
+## MCTS 
 
 Pour comprendre en détail toutes les étapes de la recherche d'arbre de Monte Carlo (MCTS), nous devons commencer par une vue d'ensemble. Dans MCTS appliqué aux jeux, nous effectuons des simulations répétées du jeu à partir d'un état de plateau donné. Dans la MCTS traditionnelle, ces simulations sont menées jusqu'à la fin du jeu. Cependant, l'implémentation de MCTS dans AlphaZero est différente de la méthode traditionnelle car AlphaZero utilise également un réseau de neurones entraîné pour fournir des politiques et des valeurs pour un état de plateau donné.
 
@@ -36,13 +36,13 @@ L'arbre est construit de manière itérative. Chaque nœud de l'arbre contient u
 
 ![State](img/mcts.png)*
 
-### Sélection
+### Sélection 🎯
 
 La première étape de MCTS est la sélection. On choisit les meilleures arêtes à partir du nœud racine jusqu'à atteindre un nœud terminal ou un nœud non exploré. Les "meilleures arêtes" sont déterminées par un équilibre entre exploration et exploitation, guidé par le réseau de neurones. L'exploration consiste à découvrir de nouvelles informations en visitant de nouveaux nœuds, tandis que l'exploitation utilise les informations existantes pour choisir les nœuds prometteurs.
 
 En pratique, cette phase de sélection suit les arêtes avec les scores les plus élevés, équilibrant les gains attendus et le potentiel de découverte. Cela garantit que l'algorithme explore suffisamment tout en exploitant les actions bénéfiques, maximisant ainsi les chances de trouver une stratégie gagnante.
 
-## Comprendre la règle PUCT
+## Comprendre la règle PUCT 🧠
 
 AlphaZero utilise une règle appelée PUCT (Predictor Upper Confidence bounds applied to Trees) pour trouver un équilibre. Cette règle a été conçue de manière empirique, inspirée par les travaux de Rosin dans un cadre de bandits avec prédicteurs. Un article récent de DeepMind discute de quelques alternatives à la PUCT.
 
@@ -68,7 +68,7 @@ Maintenant qu'on a une idée de comment obtenir PUCT(s, a), revenons à l'étape
 
 L'étape de sélection est comme montré dans le bloc ci-dessous : en partant de la racine, on cherche de manière répétée le nœud enfant ayant la valeur PUCT maximale jusqu'à ce qu'on atteigne un nœud dont l'état est encore None (pas encore exploré/initialisé).
 
-### Expansion et évaluation
+### Expansion et évaluation 🧐
 
 Une fois la sélection faite, la prochaine étape est d'étendre et d'évaluer ce nœud (dont l'état est encore None). L'extension signifie qu'on initialise l'état du nœud sélectionné selon les règles du jeu. Si le nœud est terminal, on laisse l'état à None et on marque le nœud comme terminal avec l'information du gagnant.
 
@@ -80,11 +80,30 @@ Le MCTS d'AlphaZero est différent. Ici, on utilise la valeur de sortie du rése
 
 C'est un peu comme évaluer une position aux échecs : on calcule quelques coups dans notre tête et on utilise notre intuition pour estimer la qualité de la position résultante, sans faire de simulations jusqu'à la fin du jeu avec des actions aléatoires.
 
-### Backup
+### Backup 🔄
 
 Après avoir évalué le nœud étendu, il faut mettre à jour les valeurs Q (réalisées par les valeurs de récompense totales et les comptes de visites totales) pour tous les nœuds, depuis la racine jusqu'au nœud étendu. C'est ce qu'on appelle l'étape de backup dans le MCTS.
 
-## Réseau de neurones
+## Réseau de neurones 🧠
+
+### Schéma global du réseau de neurones pour AlphaZero
+
+```plaintext
+Input
+  |
+Start Block: Conv2d -> BatchNorm2d -> ReLU
+  |
+Backbone: [ResBlock] x num_resBlocks
+  |
++-------------------+
+|                   |
+Policy Head         Value Head
+|                   |
+Conv2d -> BatchNorm -> Conv2d -> BatchNorm
+ReLU                ReLU
+Flatten             Flatten
+Linear              Linear
+```
 
 ### Schéma global du réseau
 
@@ -105,27 +124,8 @@ Flatten             Flatten
 Linear              Linear
 ```
 
-### Schéma global du réseau
 
-```plaintext
-Input
-  |
-Start Block: Conv2d -> BatchNorm2d -> ReLU
-  |
-Backbone: [ResBlock] x num_resBlocks
-  |
-+-------------------+
-|                   |
-Policy Head         Value Head
-|                   |
-Conv2d -> BatchNorm -> Conv2d -> BatchNorm
-ReLU                ReLU
-Flatten             Flatten
-Linear              Linear
-```
-
-
-### Diagramme du réseau
+### Diagramme du réseau de neurones pour AlphaZero
 
 ```plaintext
 Input
@@ -157,26 +157,29 @@ Input
 ```
 
 
-## Améliorations faites
+## Améliorations faites 🚀
 
 La première amélioration que nous avons pu faire pour l'entraînement est de paralléliser l'entraînement. En effet, l'entraînement d'AlphaZero est très long et peut prendre plusieurs jours. Ainsi, nous avons décidé de paralléliser l'entraînement en utilisant plusieurs processus pour entraîner le réseau de neurones. On retrouve ça dans AlphaZeroParallele et MCTSParallele. Cela permet de gagner un temps considérable. Il a fallu également traiter des listes de listes d'états encodés, ce qui ne fut pas une mince affaire au début.
 
-## Résultats
+## Résultats 📊
 
 Sur notre ordinateur, nous n'avons pu entraîner notre modèle uniquement sur 40 parties, ce qui est clairement insuffisant pour avoir un modèle performant. Dans le fichier visualisation, vous pourrez voir les résultats de l'entraînement des modèles si vous décidez d'essayer de les entraîner.
 
 Nous pensons qu'il faut compter environ 3000 parties pour avoir un modèle performant. Donc il faut clairement améliorer le code pour l'optimiser, en particulier pour la modélisation du jeu.
 
 
-## Amélioration possible
+## Amélioration possible 🆙
+
 Nous n'avons utilisé qu'au début un tableau pour voir les pions placés. Mais prendre un état muni d'une grille et d'un dictionnaire n'est clairement pas une mauvaise idée, et donc il faudrait revoir la modélisation du jeu pour l'optimiser.
 
 Une autre idée que nous n'avons pas eu le temps de faire est de considérer uniquement un état de jeu et par une rotation de 60 degrés, on retrouve facilement les autres états de jeu. Cela permettrait de réduire le nombre d'états de jeu et donc de réduire le temps d'entraînement. Une des améliorations les plus importantes que nous n'avons malheureusement pas eu le temps de faire. (c'est, nous imaginons, ce sur quoi vous nous attendiez évidemment...)
+(C'est une partie que j'ai implémenter dans la partie de AlphazeroParallel. Me si je n'ai pas eu le temps de la tester.)
+
 
 Enfin, comme vous avez à disposition des IA de jeux plutôt très performantes, une bonne idée serait de commencer l'entraînement du modèle avec ces IA pour qu'elle atteigne plus rapidement un niveau de jeu correct. Nous pensons que l'entraînement de l'IA sera extrêmement plus rapide au début.
 
 
-## Conclusion
+## Conclusion 🎉
 
 Ce projet, clairement, nous avons adoré le faire, nous avons appris énormément de choses. Notre seul regret est de ne pas avoir pu le finir correctement. Il y a énormément de choses que nous aurions voulu faire et c'était sûrement trop ambitieux pour notre groupe. Nous ne nous sommes peut-être pas assez rapprochés des professeurs pour nous aider au bon déroulement de ce projet. Mais nous sommes très contents de ce que nous avons pu faire et nous espérons que vous avez apprécié ce projet autant que nous.
 
@@ -184,8 +187,11 @@ Le projet était très intéressant. La liberté du sujet m'a permis d'explorer 
 
 ## utilisations
 
-### Attention Important 
+### Attention Important 🚨 ⚠️ ❗
+
 Avant d'installer les requirements, il faut installer PyTorch et CUDA en fonction de votre machine. Pour cela, je vous invite à vous rendre sur le site de PyTorch et de suivre les instructions pour installer PyTorch en fonction de votre machine.  voir [Pytorch](https://pytorch.org/get-started/locally/)
+
+De plus je ne vais pas transmetre les models dans le zip car trop gros mais vous pouvez les récuperer sur mon [github](https://github.com/Gearleur/IA02_project)
 
 ### Création de l'environnement virtuel
 ```bash
@@ -236,3 +242,7 @@ python visualisation.py
 ```bash
 python main.py
 ```
+
+#### PS la représentation médiocre au tournoi...🤕
+
+Le chagment de coordonée n'avait pas été fait en temps et en heure et nous n'avions pas vuq ue les coordonnées étaient "inversées" c'est a dire : r => -r  donc evidement nous avons fait enorment de coupos illégaux. De plus comme nous étions parti sur un temps de 500s par joueur de base evidement nous avons perdu.

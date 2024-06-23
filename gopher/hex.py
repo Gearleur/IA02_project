@@ -1,5 +1,6 @@
 import math
 from collections import namedtuple
+from typing import Dict, Tuple, Optional
 
 # Structures et fonctions utilitaires pour les hexagones
 Point = namedtuple("Point", ["x", "y"])
@@ -92,3 +93,22 @@ def hex_to_idx(hex: Hex, board_size: int) -> tuple:
     :return: Indices de colonne et de ligne
     """
     return hex.r + board_size, hex.q + board_size
+
+def rotate_hex(hex: Hex, angle: int) -> Hex:
+    """Tourne les coordonnées d'un hexagone par un multiple de 60 degrés."""
+    if angle % 60 != 0:
+        raise ValueError("L'angle doit être un multiple de 60 degrés.")
+    
+    times = angle // 60 % 6
+    if times == 1:
+        return Hex(-hex.r, -hex.s, -hex.q)
+    elif times == 2:
+        return Hex(hex.s, hex.q, hex.r)
+    elif times == 3:
+        return Hex(-hex.q, -hex.r, -hex.s)
+    elif times == 4:
+        return Hex(hex.r, hex.s, hex.q)
+    elif times == 5:
+        return Hex(-hex.s, -hex.q, -hex.r)
+    else:
+        return hex  # times == 0, no rotation

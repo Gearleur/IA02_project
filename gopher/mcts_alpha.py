@@ -6,8 +6,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import trange
 import logging
+from typing import Dict, Tuple, Optional
 
-from .hex import Hex, Point, hex_neighbor, hex_add, hex_subtract
+from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor, idx_to_hex, hex_to_idx, rotate_hex
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -87,7 +88,7 @@ class ResNet(nn.Module):
 
         self.to(device)
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Effectue une passe avant sur le réseau de neurones résiduel.
 
@@ -458,9 +459,9 @@ class MCTSAlphaParallel:
             spg_policy = policy[i]
             valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
             spg_policy *= valid_moves  # Masquer les coups invalides
-            spg_policy /= np.sum(spg_policy)  # Normaliser les probabilités
+            spg_policy /= np.sum(spg_policy) if np.sum(spg_policy) > 0 else 1  # Normaliser les probabilités
 
-            spg.root = NodeAlpha(self.game, self.args, states[i], visite_count=1)
+            spg.root = NodeAlpha(self.game, self.args, states[i], visit_count=1)
             spg.root.expand(spg_policy)  # Élargir le noeud racine avec la politique
 
         # Effectuer les recherches MCTS
@@ -507,7 +508,7 @@ class MCTSAlphaParallel:
 
                 valid_moves = self.game.get_valid_moves_encoded(node.state, 1)
                 spg_policy *= valid_moves  # Masquer les coups invalides
-                spg_policy /= np.sum(spg_policy)  # Normaliser les probabilités
+                spg_policy /= np.sum(spg_policy) if np.sum(spg_policy) > 0 else 1  # Normaliser les probabilités
 
                 node.expand(spg_policy)  # Élargir le noeud
                 node.backpropagate(spg_value)  # Rétropropagation de la valeur
@@ -617,11 +618,27 @@ class AlphaZeroParallel:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-
+            
+    def augment_data(self, memory: list) -> list:
+        """Augmente les données d'entraînement par rotations de 60 degrés."""
+        augmented_memory = []
+        for state, action_probs, outcome in memory:
+            for angle in [0, 60, 120, 180, 240, 300]:
+                rotated_state = self.game.rotate_state(state, angle)
+                rotated_action_probs = np.zeros_like(action_probs)
+                for action in range(self.game.action_size):
+                    original_q, original_r = self.game.encoded_to_server(action)
+                    original_hex = Hex(original_q, original_r, -original_q - original_r)
+                    rotated_hex = rotate_hex(original_hex, angle)
+                    rotated_action = np.ravel_multi_index(
+                        hex_to_idx(rotated_hex, self.game.size),
+                        (2 * self.game.size + 1, 2 * self.game.size + 1)
+                    )
+                    rotated_action_probs[rotated_action] = action_probs[action]
+                augmented_memory.append((rotated_state, rotated_action_probs, outcome))
+        return augmented_memory
+    
     def learn(self) -> None:
-        """
-        Effectue le processus d'apprentissage complet sur plusieurs itérations.
-        """
         for iteration in range(self.args["num_iterations"]):
             memory = []
 
@@ -630,10 +647,13 @@ class AlphaZeroParallel:
             for _ in trange(self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]):
                 memory += self.selfPlay()
 
+            # Augmente les données avec des rotations
+            augmented_memory = self.augment_data(memory)
+
             # Met le modèle en mode entraînement
             self.model.train()
             for _ in trange(self.args["num_epochs"]):
-                self.train(memory)
+                self.train(augmented_memory)
 
             # Sauvegarde l'état du modèle et de l'optimiseur
             torch.save(self.model.state_dict(), f"model_{iteration}_{self.game}.pt")

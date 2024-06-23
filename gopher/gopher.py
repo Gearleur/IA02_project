@@ -1,8 +1,8 @@
-# gopher_game/game/game_logic.py
-from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor, idx_to_hex, hex_to_idx
+# gopher_game/game/gopher.py
+from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor, idx_to_hex, hex_to_idx, rotate_hex
 import random
 import numpy as np
-from typing import List, Tuple
+from typing import Dict, Tuple, Optional
 
 Cell = Tuple[int, int]
 
@@ -232,6 +232,21 @@ class GopherGame:
                     else:
                         print(".", end=" ")
             print()
+            
+    def rotate_state(self, state: np.ndarray, angle: int) -> np.ndarray:
+        """Tourne l'état du jeu par un multiple de 60 degrés."""
+        size = (state.shape[0] - 1) // 2
+        new_state = np.zeros_like(state)
+        for q in range(-size, size + 1):
+            for r in range(-size, size + 1):
+                s = -q - r
+                if abs(q) <= size and abs(r) <= size and abs(s) <= size:
+                    original_hex = Hex(q, r, s)
+                    rotated_hex = rotate_hex(original_hex, angle)
+                    original_idx = hex_to_idx(original_hex, size)
+                    rotated_idx = hex_to_idx(rotated_hex, size)
+                    new_state[rotated_idx] = state[original_idx]
+        return new_state
 
     def serveur_state_to_gopher(
         self, server_state: List[Tuple[Tuple[int, int], int]]

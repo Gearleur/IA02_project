@@ -5,6 +5,7 @@ from .hex import (
     hex_add,
     hex_subtract,
     idx_to_hex,
+    rotate_hex,
 )
 from .gopher import GopherGame
 from .gopher_2 import GopherGame2

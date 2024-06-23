@@ -21,6 +21,7 @@ state = gopher.get_initial_state()
 # Mettre à jour l'état avec un coup initial
 state = gopher.get_next_state(state, (0, -4, 4), 1)
 
+
 # Afficher l'état actuel du jeu
 gopher.display(state)
 
