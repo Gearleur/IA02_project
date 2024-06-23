@@ -20,4 +20,3 @@ from .mcts_alpha import (
     MockResNet,
 )
 
-from .gopher_numba import *
