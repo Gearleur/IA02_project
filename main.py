@@ -140,42 +140,5 @@ def main_gopher_classique():
     game.display(state)
 
 
-def main_gopher_numba():
-    game = GopherGame3()
-    state = game.get_initial_state()
-    current_player = 1  # Rouge commence
-    turns = 0
-    memo_keys = np.array([], dtype=np.object_)
-    memo_vals = np.array([], dtype=np.object_)
-    
-    while True:
-        game.display(state)
-        
-        if game.is_terminal_state(state, current_player):
-            break
-
-        if current_player == 1:
-            move = random.choice(game.get_valid_moves(state, current_player))
-        else:
-            move = game.minimax_gopher(
-                state,
-                10,
-                float("-inf"),
-                float("inf"),
-                True,
-                current_player,
-                memo_keys,
-                memo_vals,
-            )[1]
-        
-        state = game.get_next_state(state, move, current_player)
-        current_player = -current_player  # Change player
-        turns += 1
-
-    print(f"Game over in {turns} turns.")
-    print(f"Gagnant: {-current_player}")
-    game.display(state)
-
-
 if __name__ == "__main__":
     main_alpha_gopher()
