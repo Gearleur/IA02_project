@@ -1,6 +1,6 @@
 import math
 from collections import namedtuple
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
 
 # Structures et fonctions utilitaires pour les hexagones
 Point = namedtuple("Point", ["x", "y"])

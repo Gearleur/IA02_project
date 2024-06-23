@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import trange
 import logging
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
 
 from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor, idx_to_hex, hex_to_idx, rotate_hex
 

@@ -4,7 +4,7 @@ import time
 import numpy as np
 import torch
 from typing import Dict, Any, Tuple
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Optional
 from .hex import Hex, hex_neighbor
 
 Cell = Tuple[int, int]

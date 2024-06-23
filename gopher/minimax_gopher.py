@@ -1,7 +1,7 @@
 import numpy as np
 from copy import deepcopy
 from .hex import Hex
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
 
 
 def state_to_hashable(state: Dict[Hex, int]) -> Tuple:
