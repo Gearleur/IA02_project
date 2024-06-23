@@ -20,6 +20,7 @@ class DodoGame2:
         self.memo = {}
         self.eval_cache = {}
 
+    # initialisation du plateau du jeu : mise en position des pions
     def init_board(self):
         state = {}
         for q in range(-self.size, self.size + 1):
@@ -46,6 +47,7 @@ class DodoGame2:
 
         return state
 
+    # liste les voisins d'une position en fonction de la couleur du jeton (et ses directions associés)
     def hex_neighbors(self, hex, player):
         if player == 1:  # Rouge
             directions = [Hex(0, -1, 1), Hex(1, -1, 0), Hex(1, 0, -1)]
@@ -54,6 +56,7 @@ class DodoGame2:
         neighbors = [hex_add(hex, direction) for direction in directions]
         return neighbors
 
+    # fonction retournant les mouvements valides
     def get_valid_moves(self, state, player):
         valid_moves = []
         for hex, occupant in state.items():
@@ -64,18 +67,22 @@ class DodoGame2:
                         valid_moves.append((hex, neighbor))
         return valid_moves
 
+    # vérification de la validité d'un mouvement : case vide et dans la grille
     def is_valid_move(self, state, start, end):
         return end in state and state[end] == 0
 
+    # Mise à jour du plateau après un mouvement
     def get_next_state(self, state, start, end, player):
         next_state = state.copy()
         next_state[end] = player
         next_state[start] = 0
         return next_state
 
+    # Vérification si le jeu est terminé pour un joueur donné (il n'a plus de mouvements disponibles)
     def is_terminal_state(self, state, player):
         return len(self.get_valid_moves(state, player)) == 0
 
+    #affichage du plateau de jeu
     def display(self, state):
         board_size = self.size
         for r in range(-board_size, board_size + 1):
@@ -105,8 +112,8 @@ class DodoGame2:
             return -np.sum(state == -1)
         else:
             return np.sum(state == 1)
-        
-        
+
+    # Conversion de la grille du format serveur au format interne
     def server_state_to_dodo(
         self, server_state: List[Tuple[Tuple[int, int], int]]
     ) -> List[List[int]]:
@@ -125,8 +132,8 @@ class DodoGame2:
             else:
                 state[Hex(q, -r, s)] = 0
         return state
-            
-            
+
+    # Conversion d'une action au format interne au format du serveur
     def action_to_server(self, action):
         print(action)
         start, end = action
