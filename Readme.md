@@ -246,3 +246,5 @@ python main.py
 #### PS la représentation médiocre au tournoi...🤕
 
 Le chagment de coordonée n'avait pas été fait en temps et en heure et nous n'avions pas vuq ue les coordonnées étaient "inversées" c'est a dire : r => -r  donc evidement nous avons fait enorment de coupos illégaux. De plus comme nous étions parti sur un temps de 500s par joueur de base evidement nous avons perdu.
+
+Une ia MinMax avec elagage et une mémoire des états visité a aussi été faites pour les jeux.
