@@ -20,8 +20,8 @@ class DodoGame2:
         self.memo = {}
         self.eval_cache = {}
 
-    # initialisation du plateau du jeu : mise en position des pions
     def init_board(self):
+        '''initialisation du plateau du jeu : mise en position des pions'''
         state = {}
         for q in range(-self.size, self.size + 1):
             for r in range(-self.size, self.size + 1):
@@ -69,8 +69,8 @@ class DodoGame2:
 
         return state
 
-    # liste les voisins d'une position en fonction de la couleur du jeton (et ses directions associés)
     def hex_neighbors(self, hex, player):
+        '''liste les voisins d'une position en fonction de la couleur du jeton (et ses directions associés)'''
         if player == 1:  # Rouge
             directions = [Hex(0, -1, 1), Hex(1, -1, 0), Hex(1, 0, -1)]
         elif player == -1:  # Bleu
@@ -78,8 +78,8 @@ class DodoGame2:
         neighbors = [hex_add(hex, direction) for direction in directions]
         return neighbors
 
-    # fonction retournant les mouvements valides
     def get_valid_moves(self, state, player):
+        '''fonction retournant les mouvements valides'''
         valid_moves = []
         for hex, occupant in state.items():
             if occupant == player:
@@ -89,23 +89,23 @@ class DodoGame2:
                         valid_moves.append((hex, neighbor))
         return valid_moves
 
-    # vérification de la validité d'un mouvement : case vide et dans la grille
     def is_valid_move(self, state, start, end):
+        '''vérification de la validité d'un mouvement : case vide et dans la grille'''
         return end in state and state[end] == 0
 
-    # Mise à jour du plateau après un mouvement
     def get_next_state(self, state, start, end, player):
+        '''Mise à jour du plateau après un mouvement'''
         next_state = state.copy()
         next_state[end] = player
         next_state[start] = 0
         return next_state
 
-    # Vérification si le jeu est terminé pour un joueur donné (il n'a plus de mouvements disponibles)
     def is_terminal_state(self, state, player):
+        ''' Vérification si le jeu est terminé pour un joueur donné (il n'a plus de mouvements disponibles)'''
         return len(self.get_valid_moves(state, player)) == 0
 
-    # affichage du plateau de jeu
     def display(self, state):
+        '''affichage du plateau de jeu'''
         board_size = self.size
         for r in range(-board_size, board_size + 1):
             indent = abs(r)
@@ -137,10 +137,10 @@ class DodoGame2:
         else:
             return np.sum(state == 1)
 
-    # Conversion de la grille du format serveur au format interne
     def server_state_to_dodo(
         self, server_state: List[Tuple[Tuple[int, int], int]]
     ) -> List[List[int]]:
+        ''' # Conversion de la grille du format serveur au format interne'''
         # Taille du tableau
         array_size = 2 * self.size + 1
         state = {}
@@ -157,8 +157,9 @@ class DodoGame2:
                 state[Hex(q, -r, s)] = 0
         return state
 
-    # Conversion d'une action au format interne au format du serveur
+
     def action_to_server(self, action):
+        '''Conversion d'une action au format interne au format du serveur'''
         print(action)
         start, end = action
         return (start.q, -start.r), (end.q, -end.r)
