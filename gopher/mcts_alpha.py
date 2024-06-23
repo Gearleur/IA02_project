@@ -41,6 +41,7 @@ class ResBlock(nn.Module):
         x = F.relu(x)
         return x
 
+
 # Définition du réseau de neurones résiduel
 class ResNet(nn.Module):
     def __init__(self, game, num_resBlocks: int, num_hidden: int, device: torch.device):
@@ -100,9 +101,19 @@ class ResNet(nn.Module):
         value = self.valueHead(x)
         return policy, value
 
+
 # Définition de la classe de noeud pour l'algorithme MCTS Alpha
 class NodeAlpha:
-    def __init__(self, game, args: dict, state, parent=None, action_taken=None, prior: float = 0, visit_count: int = 0):
+    def __init__(
+        self,
+        game,
+        args: dict,
+        state,
+        parent=None,
+        action_taken=None,
+        prior: float = 0,
+        visit_count: int = 0,
+    ):
         """
         Initialise un noeud pour l'algorithme de recherche Monte Carlo Tree Search (MCTS).
 
@@ -133,7 +144,7 @@ class NodeAlpha:
         """
         return len(self.children) > 0
 
-    def select(self) -> 'NodeAlpha':
+    def select(self) -> "NodeAlpha":
         """
         Sélectionne le meilleur enfant basé sur la valeur UCB (Upper Confidence Bound).
 
@@ -150,7 +161,7 @@ class NodeAlpha:
 
         return best_child
 
-    def get_ucb(self, child: 'NodeAlpha') -> float:
+    def get_ucb(self, child: "NodeAlpha") -> float:
         """
         Calcule la valeur UCB pour un enfant donné.
 
@@ -168,7 +179,7 @@ class NodeAlpha:
             * child.prior
         )
 
-    def expand(self, policy: np.ndarray) -> 'NodeAlpha':
+    def expand(self, policy: np.ndarray) -> "NodeAlpha":
         """
         Étend le noeud en ajoutant des enfants pour chaque action possible basée sur la politique.
 
@@ -287,7 +298,9 @@ class MCTSAlpha:
 
 
 class AlphaZero:
-    def __init__(self, model: torch.nn.Module, optimizer: torch.optim.Optimizer, game, args: dict) -> None:
+    def __init__(
+        self, model: torch.nn.Module, optimizer: torch.optim.Optimizer, game, args: dict
+    ) -> None:
         """
         Initialise l'instance de AlphaZero.
 
@@ -372,11 +385,11 @@ class AlphaZero:
             )
 
             out_policy, out_value = self.model(state)
-            
+
             policy_loss = F.cross_entropy(out_policy, policy_targets)
             value_loss = F.mse_loss(out_value, value_targets)
             loss = policy_loss + value_loss
-            
+
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -402,7 +415,10 @@ class AlphaZero:
 
             # Save model and optimizer states
             torch.save(self.model.state_dict(), f"model_{iteration}_{self.game}.pt")
-            torch.save(self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt")
+            torch.save(
+                self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt"
+            )
+
 
 class MCTSAlphaParallel:
     def __init__(self, game, args, model, player=1):
@@ -419,7 +435,12 @@ class MCTSAlphaParallel:
         self.model = model
         self.player = player
         self.corner_indices = [
-            5, 10, 55, 65, 110, 115,
+            5,
+            10,
+            55,
+            65,
+            110,
+            115,
         ]  # Indices des coins du plateau
 
     @torch.no_grad()
@@ -431,18 +452,23 @@ class MCTSAlphaParallel:
         :param spGames: Liste des jeux en parallèle.
         """
         policy, _ = self.model(
-            torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
+            torch.tensor(
+                self.game.get_encoded_states(states, 1), device=self.model.device
+            )
         )
         policy = torch.softmax(policy, axis=1).cpu().numpy()
-        policy = (1 - self.args["dirichlet_epsilon"]) * policy + \
-                 self.args["dirichlet_epsilon"] * np.random.dirichlet(
-                     [self.args["dirichlet_alpha"]] * self.game.action_size, size=policy.shape[0]
-                 )
+        policy = (1 - self.args["dirichlet_epsilon"]) * policy + self.args[
+            "dirichlet_epsilon"
+        ] * np.random.dirichlet(
+            [self.args["dirichlet_alpha"]] * self.game.action_size, size=policy.shape[0]
+        )
 
         for i in range(policy.shape[0]):
             valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
             for idx in self.corner_indices:
-                if valid_moves[idx] == 1:  # Vérifier si l'emplacement est un coup valide
+                if (
+                    valid_moves[idx] == 1
+                ):  # Vérifier si l'emplacement est un coup valide
                     policy[i, idx] *= self.args.get("corner_weight", 1.5)
 
         for i, spg in enumerate(spGames):
@@ -470,13 +496,20 @@ class MCTSAlphaParallel:
                 else:
                     spg.node = node
 
-            expandable_spGames = [idx for idx, spg in enumerate(spGames) if spg.node is not None]
+            expandable_spGames = [
+                idx for idx, spg in enumerate(spGames) if spg.node is not None
+            ]
 
             if expandable_spGames:
-                states = np.stack([spGames[idx].node.state for idx in expandable_spGames])
+                states = np.stack(
+                    [spGames[idx].node.state for idx in expandable_spGames]
+                )
 
                 policy, value = self.model(
-                    torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
+                    torch.tensor(
+                        self.game.get_encoded_states(states, 1),
+                        device=self.model.device,
+                    )
                 )
                 policy = torch.softmax(policy, axis=1).cpu().numpy()
                 value = value.cpu().numpy()
@@ -494,7 +527,9 @@ class MCTSAlphaParallel:
 
 
 class AlphaZeroParallel:
-    def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, game, args: dict):
+    def __init__(
+        self, model: nn.Module, optimizer: torch.optim.Optimizer, game, args: dict
+    ):
         """
         Initialisation de la classe AlphaZeroParallel.
 
@@ -535,20 +570,38 @@ class AlphaZeroParallel:
 
                 spg.memory.append((spg.root.state, action_probs, player))
 
-                temperature_action_probs = action_probs ** (1 / self.args["temperature"])
+                temperature_action_probs = action_probs ** (
+                    1 / self.args["temperature"]
+                )
                 temperature_action_probs /= np.sum(temperature_action_probs)
 
-                action = np.random.choice(self.game.action_size, p=temperature_action_probs)
+                action = np.random.choice(
+                    self.game.action_size, p=temperature_action_probs
+                )
 
                 spg.state = self.game.get_next_state_encoded(spg.state, action, player)
 
-                value, is_terminal = self.game.get_value_and_terminated(spg.state, player)
+                value, is_terminal = self.game.get_value_and_terminated(
+                    spg.state, player
+                )
 
                 if is_terminal:
-                    for hist_neutral_state, hist_action_probs, hist_player in spg.memory:
-                        hist_outcome = value if hist_player == player else self.game.get_opponent_value(value)
+                    for (
+                        hist_neutral_state,
+                        hist_action_probs,
+                        hist_player,
+                    ) in spg.memory:
+                        hist_outcome = (
+                            value
+                            if hist_player == player
+                            else self.game.get_opponent_value(value)
+                        )
                         return_memory.append(
-                            (self.game.get_encoded_state(hist_neutral_state, 1), hist_action_probs, hist_outcome)
+                            (
+                                self.game.get_encoded_state(hist_neutral_state, 1),
+                                hist_action_probs,
+                                hist_outcome,
+                            )
                         )
 
                     del spGames[i]
@@ -583,13 +636,13 @@ class AlphaZeroParallel:
             value_targets = torch.tensor(
                 value_targets, dtype=torch.float32, device=self.model.device
             )
-            
+
             out_policy, out_value = self.model(state)
-            
+
             policy_loss = F.cross_entropy(out_policy, policy_targets)
             value_loss = F.mse_loss(out_value, value_targets)
             loss = policy_loss + value_loss
-            
+
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -602,7 +655,9 @@ class AlphaZeroParallel:
             memory = []
 
             self.model.eval()
-            for _ in trange(self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]):
+            for _ in trange(
+                self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]
+            ):
                 memory += self.selfPlay()
 
             self.model.train()
@@ -610,7 +665,9 @@ class AlphaZeroParallel:
                 self.train(memory)
 
             torch.save(self.model.state_dict(), f"model_{iteration}_{self.game}.pt")
-            torch.save(self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt")
+            torch.save(
+                self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt"
+            )
 
 
 class SPG:

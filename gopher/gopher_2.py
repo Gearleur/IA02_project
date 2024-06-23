@@ -27,19 +27,27 @@ class GopherGame2:
         """Retourne le joueur actuel (1 ou -1)."""
         return 1 if len(state) % 2 == 0 else -1
 
-    def get_next_state(self, state: Dict[Hex, int], action: Hex, player: int) -> Dict[Hex, int]:
+    def get_next_state(
+        self, state: Dict[Hex, int], action: Hex, player: int
+    ) -> Dict[Hex, int]:
         """Retourne l'état suivant après qu'un joueur a joué."""
         new_state = state.copy()
         new_state[action] = player
         return new_state
 
-    def is_valid_move(self, state: Dict[Hex, int], action: Hex, player: int = None) -> bool:
+    def is_valid_move(
+        self, state: Dict[Hex, int], action: Hex, player: int = None
+    ) -> bool:
         """Vérifie si un mouvement est valide."""
         if player is None:
             player = self.get_current_player(state)
 
         # Vérifiez si le mouvement est à l'intérieur des limites de l'hexagone
-        if abs(action.q) > self.size or abs(action.r) > self.size or abs(action.s) > self.size:
+        if (
+            abs(action.q) > self.size
+            or abs(action.r) > self.size
+            or abs(action.s) > self.size
+        ):
             return False
 
         # Vérifiez si la cellule est déjà occupée
@@ -119,7 +127,9 @@ class GopherGame2:
         """Évalue un état terminal."""
         return -1000
 
-    def serveur_state_to_gopher(self, server_state: List[Tuple[Tuple[int, int], int]]) -> Dict[Hex, int]:
+    def serveur_state_to_gopher(
+        self, server_state: List[Tuple[Tuple[int, int], int]]
+    ) -> Dict[Hex, int]:
         """Convertit l'état du serveur en état du jeu Gopher."""
         state = {}
         for cell, value in server_state:

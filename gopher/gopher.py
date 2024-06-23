@@ -26,7 +26,9 @@ class GopherGame:
         """Détermine le joueur actuel en fonction de l'état."""
         return 1 if np.sum(state) % 2 == 0 else -1
 
-    def get_next_state(self, state: np.ndarray, action: Tuple[int, int, int], player: int) -> np.ndarray:
+    def get_next_state(
+        self, state: np.ndarray, action: Tuple[int, int, int], player: int
+    ) -> np.ndarray:
         """Retourne l'état suivant après une action donnée par le joueur."""
         q, r, s = action
         row = r + self.size
@@ -34,20 +36,26 @@ class GopherGame:
         state[row, col] = player
         return state
 
-    def get_next_state_idx(self, state: np.ndarray, action: Tuple[int, int], player: int) -> np.ndarray:
+    def get_next_state_idx(
+        self, state: np.ndarray, action: Tuple[int, int], player: int
+    ) -> np.ndarray:
         """Retourne l'état suivant après une action donnée par le joueur avec des indices."""
         row, col = action
         state[row, col] = player
         return state
 
-    def get_next_state_encoded(self, state: np.ndarray, action: int, player: int) -> np.ndarray:
+    def get_next_state_encoded(
+        self, state: np.ndarray, action: int, player: int
+    ) -> np.ndarray:
         """Retourne l'état suivant après une action encodée utile pour Alphazero."""
         rows, cols = 2 * self.size + 1, 2 * self.size + 1
         row, col = np.unravel_index(action, (rows, cols))
         state[row, col] = player
         return state
 
-    def is_valid_move(self, state: np.ndarray, action: Tuple[int, int, int], player: int = None) -> bool:
+    def is_valid_move(
+        self, state: np.ndarray, action: Tuple[int, int, int], player: int = None
+    ) -> bool:
         """Vérifie si un mouvement est valide."""
         if player is None:
             player = self.get_current_player(state)
@@ -85,7 +93,9 @@ class GopherGame:
 
         return not has_friendly_connection and enemy_connections == 1
 
-    def get_valid_moves(self, state: np.ndarray, player: int = None) -> List[Tuple[int, int]]:
+    def get_valid_moves(
+        self, state: np.ndarray, player: int = None
+    ) -> List[Tuple[int, int]]:
         """Retourne la liste des mouvements valides."""
         valid_moves = set()
         size = self.size
@@ -113,7 +123,9 @@ class GopherGame:
                         valid_moves.add((x, y))
         return list(valid_moves)
 
-    def get_valid_moves_encoded(self, state: np.ndarray, player: int = None) -> np.ndarray:
+    def get_valid_moves_encoded(
+        self, state: np.ndarray, player: int = None
+    ) -> np.ndarray:
         """Retourne une matrice encodée des mouvements valides encodés utile pour Alphazero."""
         if player is None:
             player = self.get_current_player(state)
@@ -133,7 +145,9 @@ class GopherGame:
         """Vérifie si un joueur a gagné."""
         return len(self.get_valid_moves(state, player=-player)) == 0
 
-    def get_value_and_terminated(self, state: np.ndarray, player: int = None) -> Tuple[int, bool]:
+    def get_value_and_terminated(
+        self, state: np.ndarray, player: int = None
+    ) -> Tuple[int, bool]:
         """Retourne la valeur et l'état de terminaison du jeu."""
         if player is None:
             player = self.get_current_player(state)
@@ -186,7 +200,9 @@ class GopherGame:
 
         return encoded_state
 
-    def get_encoded_states(self, states: List[np.ndarray], player: int = None) -> np.ndarray:
+    def get_encoded_states(
+        self, states: List[np.ndarray], player: int = None
+    ) -> np.ndarray:
         """Retourne une liste d'états encodés."""
         if player is None:
             player = self.get_current_player(states[0])
@@ -217,7 +233,9 @@ class GopherGame:
                         print(".", end=" ")
             print()
 
-    def serveur_state_to_gopher(self, server_state: List[Tuple[Tuple[int, int], int]]) -> np.ndarray:
+    def serveur_state_to_gopher(
+        self, server_state: List[Tuple[Tuple[int, int], int]]
+    ) -> np.ndarray:
         """Convertit l'état du serveur en état du jeu."""
         # Taille du tableau
         array_size = 2 * self.size + 1
