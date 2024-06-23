@@ -298,9 +298,7 @@ class MCTSAlpha:
 
 
 class AlphaZero:
-    def __init__(
-        self, model: torch.nn.Module, optimizer: torch.optim.Optimizer, game, args: dict
-    ) -> None:
+    def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, game, args: dict) -> None:
         """
         Initialise l'instance de AlphaZero.
 
@@ -323,38 +321,39 @@ class AlphaZero:
         """
         memory = []
         player = 1
-        state = self.game.get_initial_state()
+        state = self.game.get_initial_state()  # Obtenir l'état initial du jeu
 
         while True:
+            # Changer la perspective de l'état pour le joueur actuel
             neutral_state = self.game.change_perspective(state, player)
+            # Effectuer une recherche MCTS pour obtenir les probabilités d'action
             action_probs = self.mcts.search(neutral_state)
 
+            # Ajouter l'état, les probabilités d'action et le joueur actuel à la mémoire
             memory.append((neutral_state, action_probs, player))
 
+            # Appliquer la température aux probabilités d'action pour favoriser l'exploration
             temperature_action_probs = action_probs ** (1 / self.args["temperature"])
-            action = np.random.choice(self.game.action_size, p=action_probs)
+            temperature_action_probs /= np.sum(temperature_action_probs)
+            action = np.random.choice(self.game.action_size, p=temperature_action_probs)
 
+            # Mettre à jour l'état du jeu en fonction de l'action choisie
             state = self.game.get_next_state_encoded(state, action, player)
 
+            # Obtenir la valeur de l'état et vérifier si le jeu est terminé
             value, is_terminal = self.game.get_value_and_terminated(state, player)
 
             if is_terminal:
                 returnMemory = []
                 for hist_neutral_state, hist_action_probs, hist_player in memory:
-                    hist_outcome = (
-                        value
-                        if hist_player == player
-                        else self.game.get_opponent_value(value)
-                    )
+                    # Calculer le résultat de l'état historique en fonction du joueur
+                    hist_outcome = value if hist_player == player else self.game.get_opponent_value(value)
                     returnMemory.append(
-                        (
-                            self.game.get_encoded_state(hist_neutral_state, 1),
-                            hist_action_probs,
-                            hist_outcome,
-                        )
+                        (self.game.get_encoded_state(hist_neutral_state, 1), hist_action_probs, hist_outcome)
                     )
-                return returnMemory
+                return returnMemory  # Retourner la mémoire des états joués
 
+            # Passer au joueur suivant
             player = self.game.get_opponent(player)
 
     def train(self, memory: list) -> None:
@@ -363,33 +362,25 @@ class AlphaZero:
 
         :param memory: La mémoire contenant les états, les probabilités d'actions et les résultats.
         """
-        random.shuffle(memory)
+        random.shuffle(memory)  # Mélanger la mémoire pour l'entraînement
         for batchIdx in range(0, len(memory), self.args["batch_size"]):
-            sample = memory[
-                batchIdx : min(len(memory) - 1, batchIdx + self.args["batch_size"])
-            ]
+            sample = memory[batchIdx: min(len(memory), batchIdx + self.args["batch_size"])]
             state, policy_targets, value_targets = zip(*sample)
 
-            state, policy_targets, value_targets = (
-                np.array(state),
-                np.array(policy_targets),
-                np.array(value_targets).reshape(-1, 1),
-            )
+            # Convertir les échantillons en tenseurs PyTorch
+            state = torch.tensor(np.array(state), dtype=torch.float32, device=self.model.device)
+            policy_targets = torch.tensor(np.array(policy_targets), dtype=torch.float32, device=self.model.device)
+            value_targets = torch.tensor(np.array(value_targets).reshape(-1, 1), dtype=torch.float32, device=self.model.device)
 
-            state = torch.tensor(state, dtype=torch.float32, device=self.model.device)
-            policy_targets = torch.tensor(
-                policy_targets, dtype=torch.float32, device=self.model.device
-            )
-            value_targets = torch.tensor(
-                value_targets, dtype=torch.float32, device=self.model.device
-            )
-
+            # Passer les états à travers le modèle pour obtenir les prédictions
             out_policy, out_value = self.model(state)
 
+            # Calculer la perte de la politique et la perte de valeur
             policy_loss = F.cross_entropy(out_policy, policy_targets)
             value_loss = F.mse_loss(out_value, value_targets)
             loss = policy_loss + value_loss
 
+            # Rétropropagation et optimisation
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -397,27 +388,23 @@ class AlphaZero:
     def learn(self) -> None:
         """
         Entraîne le modèle sur plusieurs itérations en utilisant self-play et des mises à jour de poids.
-
-        :param iterations: Nombre d'itérations pour l'entraînement.
         """
         for iteration in range(self.args["num_iterations"]):
             memory = []
 
+            # Met le modèle en mode évaluation
             self.model.eval()
-            for _ in trange(
-                self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]
-            ):
+            for _ in trange(self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]):
                 memory += self.selfPlay()
 
+            # Met le modèle en mode entraînement
             self.model.train()
             for _ in trange(self.args["num_epochs"]):
                 self.train(memory)
 
-            # Save model and optimizer states
+            # Sauvegarder l'état du modèle et de l'optimiseur
             torch.save(self.model.state_dict(), f"model_{iteration}_{self.game}.pt")
-            torch.save(
-                self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt"
-            )
+            torch.save(self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt")
 
 
 class MCTSAlphaParallel:
@@ -435,12 +422,7 @@ class MCTSAlphaParallel:
         self.model = model
         self.player = player
         self.corner_indices = [
-            5,
-            10,
-            55,
-            65,
-            110,
-            115,
+            5, 10, 55, 65, 110, 115,
         ]  # Indices des coins du plateau
 
     @torch.no_grad()
@@ -451,85 +433,88 @@ class MCTSAlphaParallel:
         :param states: États actuels du jeu.
         :param spGames: Liste des jeux en parallèle.
         """
+        # Obtenir les politiques et les valeurs prédites par le modèle pour les états donnés
         policy, _ = self.model(
-            torch.tensor(
-                self.game.get_encoded_states(states, 1), device=self.model.device
-            )
+            torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
         )
+        # Appliquer la softmax pour obtenir des probabilités
         policy = torch.softmax(policy, axis=1).cpu().numpy()
+        # Mélanger les politiques avec du bruit Dirichlet pour ajouter de l'exploration
         policy = (1 - self.args["dirichlet_epsilon"]) * policy + self.args[
             "dirichlet_epsilon"
         ] * np.random.dirichlet(
             [self.args["dirichlet_alpha"]] * self.game.action_size, size=policy.shape[0]
         )
 
+        # Ajuster les probabilités pour favoriser les coups valides dans les coins
         for i in range(policy.shape[0]):
             valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
             for idx in self.corner_indices:
-                if (
-                    valid_moves[idx] == 1
-                ):  # Vérifier si l'emplacement est un coup valide
+                if valid_moves[idx] == 1:  # Vérifier si l'emplacement est un coup valide
                     policy[i, idx] *= self.args.get("corner_weight", 1.5)
 
+        # Élargir chaque jeu parallèle avec les politiques ajustées
         for i, spg in enumerate(spGames):
             spg_policy = policy[i]
             valid_moves = self.game.get_valid_moves_encoded(states[i], 1)
-            spg_policy *= valid_moves
-            spg_policy /= np.sum(spg_policy)
+            spg_policy *= valid_moves  # Masquer les coups invalides
+            spg_policy /= np.sum(spg_policy)  # Normaliser les probabilités
 
             spg.root = NodeAlpha(self.game, self.args, states[i], visite_count=1)
-            spg.root.expand(spg_policy)
+            spg.root.expand(spg_policy)  # Élargir le noeud racine avec la politique
 
+        # Effectuer les recherches MCTS
         for _ in range(self.args["num_searches"]):
             for spg in spGames:
                 spg.node = None
                 node = spg.root
 
+                # Sélectionner jusqu'à atteindre un noeud non entièrement élargi
                 while node.is_fully_expanded():
                     node = node.select()
 
+                # Obtenir la valeur et l'état terminal du noeud
                 value, is_terminal = self.game.get_value_and_terminated(node.state, -1)
                 value = self.game.get_opponent_value(value)
 
                 if is_terminal:
-                    node.backpropagate(value)
+                    node.backpropagate(value)  # Rétropropagation de la valeur
                 else:
-                    spg.node = node
+                    spg.node = node  # Mettre à jour le noeud courant
 
+            # Rassembler les jeux parallèles extensibles
             expandable_spGames = [
                 idx for idx, spg in enumerate(spGames) if spg.node is not None
             ]
 
             if expandable_spGames:
+                # Obtenir les états des noeuds extensibles
                 states = np.stack(
                     [spGames[idx].node.state for idx in expandable_spGames]
                 )
 
+                # Obtenir les politiques et les valeurs pour les états extensibles
                 policy, value = self.model(
-                    torch.tensor(
-                        self.game.get_encoded_states(states, 1),
-                        device=self.model.device,
-                    )
+                    torch.tensor(self.game.get_encoded_states(states, 1), device=self.model.device)
                 )
                 policy = torch.softmax(policy, axis=1).cpu().numpy()
                 value = value.cpu().numpy()
 
+            # Élargir et rétropropager pour chaque jeu parallèle extensible
             for i, idx in enumerate(expandable_spGames):
                 node = spGames[idx].node
                 spg_policy, spg_value = policy[i], value[i]
 
                 valid_moves = self.game.get_valid_moves_encoded(node.state, 1)
-                spg_policy *= valid_moves
-                spg_policy /= np.sum(spg_policy)
+                spg_policy *= valid_moves  # Masquer les coups invalides
+                spg_policy /= np.sum(spg_policy)  # Normaliser les probabilités
 
-                node.expand(spg_policy)
-                node.backpropagate(spg_value)
+                node.expand(spg_policy)  # Élargir le noeud
+                node.backpropagate(spg_value)  # Rétropropagation de la valeur
 
 
 class AlphaZeroParallel:
-    def __init__(
-        self, model: nn.Module, optimizer: torch.optim.Optimizer, game, args: dict
-    ):
+    def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, game, args: dict):
         """
         Initialisation de la classe AlphaZeroParallel.
 
@@ -546,7 +531,7 @@ class AlphaZeroParallel:
 
     def selfPlay(self) -> list:
         """
-        Effectue une session de self-play en parallele.
+        Effectue une session de self-play en parallèle.
 
         :return: Mémoire des états joués.
         """
@@ -555,57 +540,51 @@ class AlphaZeroParallel:
         spGames = [SPG(self.game) for _ in range(self.args["num_parallel_games"])]
 
         while spGames:
+            # Obtenir les états actuels de tous les jeux en parallèle
             states = np.stack([spg.state for spg in spGames])
+            # Changer la perspective des états pour le joueur actuel
             neutral_states = self.game.change_perspective(states, player)
+            # Effectuer la recherche MCTS sur les états actuels
             self.mcts.search(neutral_states, spGames)
 
             for i in range(len(spGames))[::-1]:
                 spg = spGames[i]
                 if i == 0:
                     self.game.display(spg.state)
+                
+                # Initialiser les probabilités d'action à zéro
                 action_probs = np.zeros(self.game.action_size)
                 for child in spg.root.children:
                     action_probs[child.action_taken] = child.visit_count
                 action_probs /= np.sum(action_probs)
 
+                # Ajouter l'état actuel, les probabilités d'action et le joueur à la mémoire
                 spg.memory.append((spg.root.state, action_probs, player))
 
-                temperature_action_probs = action_probs ** (
-                    1 / self.args["temperature"]
-                )
+                # Appliquer la température aux probabilités d'action
+                temperature_action_probs = action_probs ** (1 / self.args["temperature"])
                 temperature_action_probs /= np.sum(temperature_action_probs)
 
-                action = np.random.choice(
-                    self.game.action_size, p=temperature_action_probs
-                )
+                # Sélectionner une action en fonction des probabilités
+                action = np.random.choice(self.game.action_size, p=temperature_action_probs)
 
+                # Mettre à jour l'état du jeu en fonction de l'action choisie
                 spg.state = self.game.get_next_state_encoded(spg.state, action, player)
 
-                value, is_terminal = self.game.get_value_and_terminated(
-                    spg.state, player
-                )
+                # Obtenir la valeur de l'état et vérifier si le jeu est terminé
+                value, is_terminal = self.game.get_value_and_terminated(spg.state, player)
 
                 if is_terminal:
-                    for (
-                        hist_neutral_state,
-                        hist_action_probs,
-                        hist_player,
-                    ) in spg.memory:
-                        hist_outcome = (
-                            value
-                            if hist_player == player
-                            else self.game.get_opponent_value(value)
-                        )
+                    for hist_neutral_state, hist_action_probs, hist_player in spg.memory:
+                        # Calculer le résultat de l'état historique en fonction du joueur
+                        hist_outcome = value if hist_player == player else self.game.get_opponent_value(value)
                         return_memory.append(
-                            (
-                                self.game.get_encoded_state(hist_neutral_state, 1),
-                                hist_action_probs,
-                                hist_outcome,
-                            )
+                            (self.game.get_encoded_state(hist_neutral_state, 1), hist_action_probs, hist_outcome)
                         )
-
+                    # Supprimer le jeu terminé de la liste des jeux en parallèle
                     del spGames[i]
 
+            # Passer au joueur suivant
             player = self.game.get_opponent(player)
 
         return return_memory
@@ -618,31 +597,23 @@ class AlphaZeroParallel:
         """
         random.shuffle(memory)
         for batchIdx in range(0, len(memory), self.args["batch_size"]):
-            sample = memory[
-                batchIdx : min(len(memory) - 1, batchIdx + self.args["batch_size"])
-            ]
+            sample = memory[batchIdx: min(len(memory), batchIdx + self.args["batch_size"])]
             state, policy_targets, value_targets = zip(*sample)
 
-            state, policy_targets, value_targets = (
-                np.array(state),
-                np.array(policy_targets),
-                np.array(value_targets).reshape(-1, 1),
-            )
+            # Convertir les échantillons en tenseurs PyTorch
+            state = torch.tensor(np.array(state), dtype=torch.float32, device=self.model.device)
+            policy_targets = torch.tensor(np.array(policy_targets), dtype=torch.float32, device=self.model.device)
+            value_targets = torch.tensor(np.array(value_targets).reshape(-1, 1), dtype=torch.float32, device=self.model.device)
 
-            state = torch.tensor(state, dtype=torch.float32, device=self.model.device)
-            policy_targets = torch.tensor(
-                policy_targets, dtype=torch.float32, device=self.model.device
-            )
-            value_targets = torch.tensor(
-                value_targets, dtype=torch.float32, device=self.model.device
-            )
-
+            # Passer les états à travers le modèle pour obtenir les prédictions
             out_policy, out_value = self.model(state)
 
+            # Calculer la perte de la politique et la perte de valeur
             policy_loss = F.cross_entropy(out_policy, policy_targets)
             value_loss = F.mse_loss(out_value, value_targets)
             loss = policy_loss + value_loss
 
+            # Rétropropagation et optimisation
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -654,22 +625,21 @@ class AlphaZeroParallel:
         for iteration in range(self.args["num_iterations"]):
             memory = []
 
+            # Met le modèle en mode évaluation
             self.model.eval()
-            for _ in trange(
-                self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]
-            ):
+            for _ in trange(self.args["num_selfPlay_iterations"] // self.args["num_parallel_games"]):
                 memory += self.selfPlay()
 
+            # Met le modèle en mode entraînement
             self.model.train()
             for _ in trange(self.args["num_epochs"]):
                 self.train(memory)
 
+            # Sauvegarde l'état du modèle et de l'optimiseur
             torch.save(self.model.state_dict(), f"model_{iteration}_{self.game}.pt")
-            torch.save(
-                self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt"
-            )
-
-
+            torch.save(self.optimizer.state_dict(), f"optimizer_{iteration}_{self.game}.pt")
+            
+            
 class SPG:
     def __init__(self, game):
         self.state = game.get_initial_state()
