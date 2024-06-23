@@ -7,8 +7,8 @@ def state_to_hashable(state):
     )
 
 
-# algorithme minmax avec élagage alpha-beta et mmemorisation.
 def minimax_dodo(game, state, depth, alpha, beta, maximizingPlayer, player, memo=None):
+    '''algorithme minmax avec élagage alpha-beta et memorisation'''
     if memo is None:
         memo = {}
     # si l'état actuel est déjà mémorisé, la valeur associée est retournée
