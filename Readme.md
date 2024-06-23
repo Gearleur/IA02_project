@@ -6,6 +6,8 @@ Pour commencer ce titre un peu aguicheur, nous allons vous raconter un projet d'
 
 Le projet Gopher and Dodo est un projet pour l'UV d'IA02 dans lequel il fallait mettre en place une IA pour jouer aux jeux Dodo et Gopher que vous trouverez dans le dossier Règles. Ce sont des jeux extrêmement simples et très faciles à mettre en place. (Ce qui est en partie la cause de notre échec).
 
+Pour essayer les differents algorithmes : aller [ici](#Utilisations)
+
 ## Modélisation des jeux ♟️
 
 Nous allons passer le fait d'expliquer les règles du jeu mais nous allons nous attarder sur deux modélisations des jeux. Dans chaque dossier de jeu, vous avez game et game_2. La première modélisation est la plus complexe car elle devait s'adapter pour pouvoir implémenter AlphaZero. Elle prend en compte un système de tableau pour gérer les états et un système qui permet d'encoder cet état pour pouvoir le passer dans un réseau de neurones. Les parties qui diffèrent d'une modélisation de base sont : get_encoded_state et next_state_encoded. La fonction get_encoded_state permet, en ayant un état de jeu donné, d'obtenir trois matrices de jeu avec : les coups adverses, les coups jouables et enfin les coups joués par le joueur. La fonction next_state_encoded permet de passer d'un état de jeu à un autre en donnant un coup à partir d'une matrice 1D de l'ensemble des coups jouables. Par la suite, cette modélisation nous simplifiera l'utilisation d'un modèle ResNet pour AlphaZero.
@@ -185,7 +187,7 @@ Ce projet, clairement, nous avons adoré le faire, nous avons appris énormémen
 
 Le projet était très intéressant. La liberté du sujet m'a permis d'explorer et de découvrir divers algorithmes, même si je n'ai pas réussi à les faire tous marcher. Ces difficultés ont pû être surmontées grâce aux capacités de mon binôme. Me concentrer sur des tâches et algorithmes plus simples m'a permis de progresser et de faire progresser le projet. Cette expérience était enrichissante et formatrice.
 
-# Utilisations
+# Utilisations {#Utilisations}
 
 ### Attention Important 🚨 ⚠️ ❗
 
