@@ -6,7 +6,7 @@ Pour commencer ce titre un peu aguicheur, nous allons vous raconter un projet d'
 
 Le projet Gopher and Dodo est un projet pour l'UV d'IA02 dans lequel il fallait mettre en place une IA pour jouer aux jeux Dodo et Gopher que vous trouverez dans le dossier Règles. Ce sont des jeux extrêmement simples et très faciles à mettre en place. (Ce qui est en partie la cause de notre échec).
 
-Pour essayer les differents algorithmes : aller [ici](#Utilisations)
+Pour essayer les differents algorithmes : aller [ici](#utilisations)
 
 ## Modélisation des jeux ♟️
 
@@ -187,7 +187,7 @@ Ce projet, clairement, nous avons adoré le faire, nous avons appris énormémen
 
 Le projet était très intéressant. La liberté du sujet m'a permis d'explorer et de découvrir divers algorithmes, même si je n'ai pas réussi à les faire tous marcher. Ces difficultés ont pû être surmontées grâce aux capacités de mon binôme. Me concentrer sur des tâches et algorithmes plus simples m'a permis de progresser et de faire progresser le projet. Cette expérience était enrichissante et formatrice.
 
-# Utilisations {#Utilisations}
+# Utilisations {#utilisations}
 
 ### Attention Important 🚨 ⚠️ ❗
 
