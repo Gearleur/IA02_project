@@ -237,7 +237,7 @@ class MCTSAlpha:
         :param state: L'état initial du jeu.
         :return: Les probabilités des actions à prendre.
         """
-        root = NodeAlpha(self.game, self.args, state, visite_count=1)
+        root = NodeAlpha(self.game, self.args, state, visit_count=1)
 
         # Obtenez la politique initiale du modèle
         policy, _ = self.model(
@@ -283,7 +283,7 @@ class MCTSAlpha:
                 # Filtrer les mouvements invalides
                 valid_moves = self.game.get_valid_moves_encoded(node.state, 1)
                 policy *= valid_moves
-                policy /= np.sum(policy)
+                policy /= np.sum(policy) if np.sum(policy) > 0 else 1
 
                 value = value.item()
                 node.expand(policy)

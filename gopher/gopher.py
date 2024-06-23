@@ -2,7 +2,7 @@
 from .hex import Hex, Point, hex_add, hex_subtract, hex_neighbor, idx_to_hex, hex_to_idx, rotate_hex
 import random
 import numpy as np
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
 
 Cell = Tuple[int, int]
 

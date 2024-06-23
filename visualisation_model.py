@@ -7,11 +7,22 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from gopher import *
 
+gopher = GopherGame(board_size=6)
+
+args = {
+    "C": 2,
+    "num_searches": 1200,
+    "dirichlet_epsilon": 0.0,
+    "dirichlet_alpha": 0.3,
+}
+
 # Déterminer l'appareil à utiliser (GPU si disponible, sinon CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#utiliser mockresnet
+model = MockResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
+# Initialiser MCTS
+mcts = MCTSAlpha(game=gopher, args=args, model=model)
 
-# Initialiser le jeu avec une taille de plateau de 6
-gopher = GopherGame(board_size=6)
 
 # Calculer la taille totale du plateau
 board_size = 2 * gopher.size + 1
@@ -20,6 +31,13 @@ board_size = 2 * gopher.size + 1
 state = gopher.get_initial_state()
 # Mettre à jour l'état avec un coup initial
 state = gopher.get_next_state(state, (0, -4, 4), 1)
+
+neutral_state = gopher.change_perspective(state, -1)
+mcts_probs = mcts.search(neutral_state)
+action = np.argmax(mcts_probs)
+state = gopher.get_next_state_encoded(state, action, -1)
+
+gopher.display(state)
 
 
 # Afficher l'état actuel du jeu
