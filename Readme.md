@@ -185,7 +185,7 @@ Ce projet, clairement, nous avons adoré le faire, nous avons appris énormémen
 
 Le projet était très intéressant. La liberté du sujet m'a permis d'explorer et de découvrir divers algorithmes, même si je n'ai pas réussi à les faire tous marcher. Ces difficultés ont pû être surmontées grâce aux capacités de mon binôme. Me concentrer sur des tâches et algorithmes plus simples m'a permis de progresser et de faire progresser le projet. Cette expérience était enrichissante et formatrice.
 
-## utilisations
+# Utilisations
 
 ### Attention Important 🚨 ⚠️ ❗
 
