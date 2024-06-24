@@ -34,9 +34,6 @@ state = gopher.get_next_state(state, (0, -4, 4), 1)
 
 neutral_state = gopher.change_perspective(state, -1)
 mcts_probs = mcts.search(neutral_state)
-print(mcts_probs)
-mcts_probs = gopher.rotate_encoded_state(mcts_probs, 60)
-print(mcts_probs)
 action = np.argmax(mcts_probs)
 state = gopher.get_next_state_encoded(state, action, -1)
 

@@ -252,9 +252,7 @@ class GopherGame:
         """Tourne l'état encodé qui est un tableau 1D"""
         #reshape the state to 2D
         state_2d = state.reshape((2 * self.size + 1, 2 * self.size + 1))
-        print(state_2d)
         rotated_state = self.rotate_state(state_2d, angle)
-        print(rotated_state)
         return rotated_state.flatten()
         
 
