@@ -548,7 +548,7 @@ class AlphaZeroParallel:
                 for child in spg.root.children:
                     action_probs[child.action_taken] = child.visit_count
                 action_probs /= np.sum(action_probs)
-
+                
                 # Ajouter l'état actuel, les probabilités d'action et le joueur à la mémoire
                 spg.memory.append((spg.root.state, action_probs, player))
 
@@ -615,17 +615,7 @@ class AlphaZeroParallel:
         for state, action_probs, outcome in memory:
             for angle in [0, 60, 120, 180, 240, 300]:
                 rotated_state = self.game.rotate_state(state, angle)
-                rotated_action_probs = np.zeros_like(action_probs)
-                for action in range(self.game.action_size):
-                    original_q, original_r = self.game.encoded_to_server(action)
-                    original_hex = Hex(original_q, original_r, -original_q - original_r)
-                    rotated_hex = rotate_hex(original_hex, angle)
-                    rotated_action = np.ravel_multi_index(
-                        hex_to_idx(rotated_hex, self.game.size),
-                        (2 * self.game.size + 1, 2 * self.game.size + 1)
-                    )
-                    rotated_action_probs[rotated_action] = action_probs[action]
-                augmented_memory.append((rotated_state, rotated_action_probs, outcome))
+                rotated_action_probs = self.game.rotate_encoded_state(action_probs, angle)
         return augmented_memory
     
     def learn(self) -> None:

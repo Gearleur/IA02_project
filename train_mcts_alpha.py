@@ -20,9 +20,9 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
 args = {
     "num_searches": 700,
     "C": 2,
-    "num_iterations": 8,
-    "num_selfPlay_iterations": 160,
-    "num_parallel_games": 40,
+    "num_iterations": 2,
+    "num_selfPlay_iterations": 10,
+    "num_parallel_games": 10,
     "num_epochs": 4,
     "batch_size": 64,
     "temperature": 1.25,

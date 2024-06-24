@@ -247,6 +247,16 @@ class GopherGame:
                     rotated_idx = hex_to_idx(rotated_hex, size)
                     new_state[rotated_idx] = state[original_idx]
         return new_state
+    
+    def rotate_encoded_state(self, state: np.ndarray, angle: int) -> np.ndarray:
+        """Tourne l'état encodé qui est un tableau 1D"""
+        #reshape the state to 2D
+        state_2d = state.reshape((2 * self.size + 1, 2 * self.size + 1))
+        print(state_2d)
+        rotated_state = self.rotate_state(state_2d, angle)
+        print(rotated_state)
+        return rotated_state.flatten()
+        
 
     def serveur_state_to_gopher(
         self, server_state: List[Tuple[Tuple[int, int], int]]
