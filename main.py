@@ -23,8 +23,8 @@ def main_alpha_gopher():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # model random pour essayer
-    model = ResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
-    model.load_state_dict(torch.load("model_1_GopherGame.pt", map_location=device))
+    model = ResNet(gopher, num_resBlocks=9, num_hidden=128, device=device)
+    model.load_state_dict(torch.load("model_2_GopherGame.pt", map_location=device))
     # Initialiser MCTS
     mcts = MCTSAlpha(game=gopher, args=args, model=model)
 
