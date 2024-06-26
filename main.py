@@ -38,13 +38,13 @@ def main_alpha_gopher():
     while True:
         gopher.display(state)
         if player == 1:
-            action = random.choice(gopher.get_valid_moves(state))
-            state = gopher.get_next_state_idx(state, action, player)
-        else:
-            neutral_state = gopher.change_perspective(state, -1)
+            neutral_state = gopher.change_perspective(state, player)
             mcts_probs = mcts.search(neutral_state)
             action = np.argmax(mcts_probs)
             state = gopher.get_next_state_encoded(state, action, player)
+        else:
+            action = random.choice(gopher.get_valid_moves(state))
+            state = gopher.get_next_state_idx(state, action, player)
         # current player,
 
         value, is_terminal = gopher.get_value_and_terminated(state, player)
