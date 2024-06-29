@@ -14,7 +14,7 @@ def main_alpha_gopher():
     # Définir les arguments pour MCTS
     args = {
         "C": 2,
-        "num_searches": 1200,
+        "num_searches": 700,
         "dirichlet_epsilon": 0.0,
         "dirichlet_alpha": 0.3,
     }
@@ -24,7 +24,7 @@ def main_alpha_gopher():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # model random pour essayer
     model = ResNet(gopher, num_resBlocks=9, num_hidden=128, device=device)
-    model.load_state_dict(torch.load("model_4_GopherGame.pt", map_location=device))
+    model.load_state_dict(torch.load("model_5_GopherGame.pt", map_location=device))
     # Initialiser MCTS
     mcts = MCTSAlpha(game=gopher, args=args, model=model)
 

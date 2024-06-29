@@ -19,8 +19,11 @@ args = {
 # Déterminer l'appareil à utiliser (GPU si disponible, sinon CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #utiliser mockresnet
-model = MockResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
-# Initialiser MCTS
+# Initialiser le modèle ResNet avec les paramètres spécifiés
+model = ResNet(gopher, num_resBlocks=9, num_hidden=128, device=device)
+# Charger les poids du modèle entraîné
+model.load_state_dict(torch.load("model_2_GopherGame.pt", map_location=device))
+
 mcts = MCTSAlpha(game=gopher, args=args, model=model)
 
 
@@ -49,10 +52,6 @@ encoded_state = gopher.get_encoded_state(state)
 # Convertir l'état encodé en tenseur PyTorch et ajouter une dimension pour le batch
 tensor_state = torch.tensor(encoded_state, device=device).unsqueeze(0)
 
-# Initialiser le modèle ResNet avec les paramètres spécifiés
-model = ResNet(gopher, num_resBlocks=9, num_hidden=256, device=device)
-# Charger les poids du modèle entraîné
-model.load_state_dict(torch.load("model_1_GopherGame.pt", map_location=device))
 # Mettre le modèle en mode évaluation
 model.eval()
 
